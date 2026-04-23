@@ -9,7 +9,6 @@ PROJECT_DIR ?= $(CURDIR)
 TMPDIR ?= /tmp
 
 # Конфигурация
-YP_GOPHERMART_PORT ?= 8082
 YP_AUTOTESTS_GIT_URL ?= "ssh://git@github.com/Yandex-Practicum/go-autotests"
 YP_AUTOTESTS_PATH ?= $(TMPDIR)/go-autotests
 YP_GOPHERMART_TEST ?= $(HOME)/bin/gophermarttest
@@ -17,6 +16,8 @@ YP_CUSTOM_TEST ?= ""
 YP_PSQL_DSN ?= ""
 
 GO_PACKAGES := $(shell go list ./... | grep -v '/mocks')
+OS := $(shell uname -s | tr '[:upper:]' '[:lower:]')
+ARCH := $(shell uname -m)
 
 # Инструменты
 GOLANGCI_LINT ?= golangci-lint
@@ -40,13 +41,18 @@ TAIL_LAST_N_LINES ?= 10
 # Логи и PID
 ACCRUAL_LOG_FILE := $(TMPDIR)/practicum-accrual.log
 ACCRUAL_PID_FILE := $(TMPDIR)/practicum-accrual.pid
-ACCRUALT_CMD := $(PROJECT_DIR)/cmd/accrual
-ACCRUAL_BIN := $(accrual_CMD)/accrual_darwin_arm64
+ACCRUAL_CMD := $(PROJECT_DIR)/cmd/accrual
+# ACCRUAL_BIN := $(ACCRUAL_CMD)/accrual_darwin_arm64
+ACCRUAL_BIN := $(ACCRUAL_CMD)/accrual_$(OS)_$(ARCH)
+ACCRUAL_HOST ?= localhost
+ACCRUAL_PORT ?= 9081
 
 GOPHERMART_LOG_FILE := $(TMPDIR)/practicum-gophermart.log
 GOPHERMART_PID_FILE := $(TMPDIR)/practicum-gophermart.pid
 GOPHERMART_CMD := $(PROJECT_DIR)/cmd/gophermart
 GOPHERMART_BIN := $(GOPHERMART_CMD)/gophermart
+GOPHERMART_HOST ?= localhost
+GOPHERMART_PORT ?= 9082
 
 GO_COVERAGE_REPORT := $(TMPDIR)/practicum-gophermart-coverage.out
 
@@ -134,12 +140,15 @@ test-go: # Runs golang tests
 
 test-yp: stop-docker start-docker check-binaries
 	$(NOECHO) $(call print_title,"Running Yandex.Practicum tests")
-	$(NOECHO) $(YP_GOPHERMART_TEST) -test.v \ # -test.run=^TestIteration$*$$ \
+	$(NOECHO) $(YP_GOPHERMART_TEST) -test.v \
 		-accrual-binary-path $(ACCRUAL_BIN) \
 		-gophermart-binary-path $(GOPHERMART_BIN) \
-		-gophermart-port $(YP_GOPHERMART_PORT) \
-		-source-path $(PROJECT_DIR) \
-		-database-dsn $(YP_PSQL_DSN)
+		-gophermart-database-uri $(YP_PSQL_DSN) \
+		-accrual-database-uri $(YP_PSQL_DSN) \
+		-gophermart-host $(GOPHERMART_HOST) \
+		-gophermart-port $(GOPHERMART_PORT) \
+		-accrual-host $(ACCRUAL_HOST) \
+		-accrual-port $(ACCRUAL_PORT)
 
 test-yp-custom: clone-yp-autotest # Runs Yandex.Practicum test cases
 	$(NOECHO) $(call print_title,"Running Yandex.Practicum tests for custom iteration")
@@ -153,9 +162,12 @@ test-yp-custom: clone-yp-autotest # Runs Yandex.Practicum test cases
 		./cmd/gophermarttest/ \
 		-accrual-binary-path $(ACCRUAL_BIN) \
 		-gophermart-binary-path $(GOPHERMART_BIN) \
+		-gophermart-database-uri $(YP_PSQL_DSN) \
+		-accrual-database-uri $(YP_PSQL_DSN) \
+		-gophermart-host $(GOPHERMART_HOST) \
 		-gophermart-port $(YP_GOPHERMART_PORT) \
-		-source-path $(PROJECT_DIR) \
-		-database-dsn $(YP_PSQL_DSN)
+		-accrual-host $(ACCRUAL_HOST) \
+		-accrual-port $(ACCRUAL_PORT)
 
 coverage: # Runs tests and shows total coverage
 	$(NOECHO) $(call print_title,"Running tests with coverage")
