@@ -5,12 +5,14 @@ import (
 	"database/sql"
 	"net/http"
 
-	// "github.com/KalessinD/gophermart/internal/config"
-	// "github.com/KalessinD/gophermart/internal/handlers"
-	// "github.com/KalessinD/gophermart/internal/repositories"
-	// "github.com/KalessinD/gophermart/internal/services"
+	// config "github.com/KalessinD/gophermart/internal/config"
+	handler "github.com/KalessinD/gophermart/internal/handlers"
+	// repository "github.com/KalessinD/gophermart/internal/repositories"
+	service "github.com/KalessinD/gophermart/internal/services"
 
 	"github.com/KalessinD/gophermart/internal/config"
+	mw "github.com/KalessinD/gophermart/internal/middleware"
+	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 )
@@ -42,22 +44,33 @@ func PsqlConnect(ctx context.Context, dsn string, log *zap.Logger) (*sql.DB, err
 func GetBaseRouter(cfg *config.GophermartConfig, log *zap.Logger) *chi.Mux {
 	router := chi.NewRouter()
 
-	// router.Use(middleware.Logger) // slow
-	// router.Use(middleware.RequestID)
-
-	// router.Use(mw.RequestIDMiddleware)
-	// router.Use(middleware.Recoverer)
-	// router.Use(mw.ChiParamsMiddleware)
-	// router.Use(mw.Middleware(log))
-	// router.Use(mw.CompressionMiddleware)
-	// router.Use(mw.CheckHashSum(cfg.EncryptionKey))
-	// router.Use(middleware.Timeout(cfg.ProcessingTimeout))
+	router.Use(middleware.RequestID)
+	router.Use(middleware.Recoverer)
+	router.Use(mw.Middleware(log))
+	router.Use(middleware.Timeout(cfg.ProcessingTimeout))
 
 	return router
 }
 
-func NewRouter(ctx context.Context, cfg *config.GophermartConfig, log *zap.Logger) (http.Handler, error) {
+func NewRouter(cfg *config.GophermartConfig, log *zap.Logger) (http.Handler, error) {
 	router := GetBaseRouter(cfg, log)
+
+	commonUserHandler := handler.NewCommonHandler(
+		service.NewCommonAction(),
+	)
+
+	router.Route("/api/user/", func(r chi.Router) {
+		r.Post("login", commonUserHandler.Login)
+		r.Post("register", commonUserHandler.Register)
+
+		/* JWT Auth
+		r.Post("orders", authUserHandler.AddOrder)
+		r.Get("orders", authUserHandler.ListOrders)
+		r.Get("balance", authUserHandler.GetLoyalityBalance)
+		r.Post("balance/withdraw", authUserHandler.WithdrawBalance)
+		r.Get("withdrawals", authUserHandler.ListWithdrawals)
+		*/
+	})
 
 	return router, nil
 }

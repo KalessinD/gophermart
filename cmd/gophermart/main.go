@@ -5,6 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -31,12 +32,12 @@ func runHTTPServer(cfg *config.GophermartConfig, log *zap.Logger) error {
 	notifyCtx, _ := signal.NotifyContext(rootCtx, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM)
 	defer cancel()
 
-	router, err := gm.NewRouter(notifyCtx, cfg, log)
+	router, err := gm.NewRouter(cfg, log)
 	if err != nil {
 		return err
 	}
 
-	if err = connect_db_and_apply_migration(rootCtx, cfg, log); err != nil {
+	if err = databaseWorks(rootCtx, cfg, log); err != nil {
 		return err
 	}
 
@@ -48,6 +49,7 @@ func runHTTPServer(cfg *config.GophermartConfig, log *zap.Logger) error {
 		ReadHeaderTimeout: cfg.ReadHeaderTimeout,
 		WriteTimeout:      cfg.WriteTimeout,
 		IdleTimeout:       cfg.IdleTimeout,
+		BaseContext:       func(net.Listener) context.Context { return notifyCtx },
 	}
 
 	// Graceful Shutdown
@@ -60,12 +62,10 @@ func runHTTPServer(cfg *config.GophermartConfig, log *zap.Logger) error {
 		}
 	}()
 
-
-
 	return waitServer(rootCtx, server, errCh, cfg, log)
 }
 
-func connect_db_and_apply_migration(ctx context.Context, cfg *config.GophermartConfig, log *zap.Logger) error {
+func databaseWorks(ctx context.Context, cfg *config.GophermartConfig, log *zap.Logger) error {
 	if cfg.PsqlDSN == "" {
 		return errors.New("database_dsn is empty")
 	}

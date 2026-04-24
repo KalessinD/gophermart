@@ -15,7 +15,7 @@ const (
 	DefaultGracefullShutdownTimeout time.Duration = 5 * time.Second
 	DefaultPsqlDSN                  string        = ""
 	DefaultServerEncryptionKey      string        = "secret"
-	DefaultAccrualAddress			string 		  = ""
+	DefaultAccrualAddress           string        = ""
 )
 
 type (
@@ -29,7 +29,7 @@ type (
 		GracefullShutdownTimeout time.Duration
 		PsqlDSN                  string
 		EncryptionKey            string
-		AccrualAddress 			 string
+		AccrualAddress           string
 	}
 
 	GophermartConfigInterface interface {
@@ -50,7 +50,7 @@ func GetDefaultGophermartConfig() *GophermartConfig {
 		GracefullShutdownTimeout: DefaultGracefullShutdownTimeout,
 		PsqlDSN:                  DefaultPsqlDSN,
 		EncryptionKey:            DefaultServerEncryptionKey,
-		AccrualAddress: 		  DefaultAccrualAddress,
+		AccrualAddress:           DefaultAccrualAddress,
 	}
 }
 

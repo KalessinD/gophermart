@@ -17,7 +17,12 @@ YP_PSQL_DSN ?= ""
 
 GO_PACKAGES := $(shell go list ./... | grep -v '/mocks')
 OS := $(shell uname -s | tr '[:upper:]' '[:lower:]')
-ARCH := $(shell uname -m)
+
+ifeq ($(OS),darwin)
+    ARCH := $(shell uname -m)
+else
+    ARCH := amd64
+endif
 
 # Инструменты
 GOLANGCI_LINT ?= golangci-lint
