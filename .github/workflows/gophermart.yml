@@ -57,7 +57,10 @@ jobs:
           apt-get update && \
           DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends --no-install-suggests ca-certificates curl gcc g++ make
           curl -sSfL https://golangci-lint.run/install.sh | sh -s v2.11.4
-          mv bin/* $HOME/go/bin/
+          echo $GOPATH
+          echo $GOBIN
+          echo `go env GOBIN`
+          mv bin/* `go env GOBIN`
           rm -rf bin
 
       - name: Setup autotest binary
