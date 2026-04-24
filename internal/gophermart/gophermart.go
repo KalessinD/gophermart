@@ -5,9 +5,8 @@ import (
 	"database/sql"
 	"net/http"
 
-	// config "github.com/KalessinD/gophermart/internal/config"
 	handler "github.com/KalessinD/gophermart/internal/handlers"
-	// repository "github.com/KalessinD/gophermart/internal/repositories"
+	repository "github.com/KalessinD/gophermart/internal/repositories"
 	service "github.com/KalessinD/gophermart/internal/services"
 
 	"github.com/KalessinD/gophermart/internal/config"
@@ -52,11 +51,13 @@ func GetBaseRouter(cfg *config.GophermartConfig, log *zap.Logger) *chi.Mux {
 	return router
 }
 
-func NewRouter(cfg *config.GophermartConfig, log *zap.Logger) (http.Handler, error) {
+func NewRouter(cfg *config.GophermartConfig, log *zap.Logger, pgdb *sql.DB) (http.Handler, error) {
 	router := GetBaseRouter(cfg, log)
 
 	commonUserHandler := handler.NewCommonHandler(
-		service.NewCommonAction(),
+		service.NewCommonAction(
+			repository.NewSQLStorage(pgdb),
+		),
 	)
 
 	router.Route("/api/user/", func(r chi.Router) {

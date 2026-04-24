@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"flag"
 	"fmt"
@@ -32,12 +33,13 @@ func runHTTPServer(cfg *config.GophermartConfig, log *zap.Logger) error {
 	notifyCtx, _ := signal.NotifyContext(rootCtx, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM)
 	defer cancel()
 
-	router, err := gm.NewRouter(cfg, log)
+	pgdb, err := databaseWorks(rootCtx, cfg, log)
 	if err != nil {
 		return err
 	}
 
-	if err = databaseWorks(rootCtx, cfg, log); err != nil {
+	router, err := gm.NewRouter(cfg, log, pgdb)
+	if err != nil {
 		return err
 	}
 
@@ -65,14 +67,14 @@ func runHTTPServer(cfg *config.GophermartConfig, log *zap.Logger) error {
 	return waitServer(rootCtx, server, errCh, cfg, log)
 }
 
-func databaseWorks(ctx context.Context, cfg *config.GophermartConfig, log *zap.Logger) error {
+func databaseWorks(ctx context.Context, cfg *config.GophermartConfig, log *zap.Logger) (*sql.DB, error) {
 	if cfg.PsqlDSN == "" {
-		return errors.New("database_dsn is empty")
+		return nil, errors.New("database_dsn is empty")
 	}
 
 	pgdb, err := gm.PsqlConnect(ctx, cfg.PsqlDSN, log)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	migrations := []string{"migrations/000001_init_project.up.sql"}
@@ -81,10 +83,10 @@ func databaseWorks(ctx context.Context, cfg *config.GophermartConfig, log *zap.L
 	err = migrator.Apply(ctx, cfg.PsqlDSN, migrations)
 	if err != nil {
 		log.Error("Can't apply migration", zap.Error(err))
-		return err
+		return nil, err
 	}
 
-	return nil
+	return pgdb, nil
 }
 
 func run() error {

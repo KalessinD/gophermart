@@ -1,6 +1,7 @@
 ifneq (,$(wildcard .env))
 include .env
 export YP_PSQL_DSN
+export YP_CUSTOM_TEST
 export DOCKER_COMPOSE/check
 endif
 
@@ -47,7 +48,6 @@ TAIL_LAST_N_LINES ?= 10
 ACCRUAL_LOG_FILE := $(TMPDIR)/practicum-accrual.log
 ACCRUAL_PID_FILE := $(TMPDIR)/practicum-accrual.pid
 ACCRUAL_CMD := $(PROJECT_DIR)/cmd/accrual
-# ACCRUAL_BIN := $(ACCRUAL_CMD)/accrual_darwin_arm64
 ACCRUAL_BIN := $(ACCRUAL_CMD)/accrual_$(OS)_$(ARCH)
 ACCRUAL_HOST ?= localhost
 ACCRUAL_PORT ?= 9081

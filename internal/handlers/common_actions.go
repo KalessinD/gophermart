@@ -1,22 +1,24 @@
 package handler
 
 import (
+	"io"
 	"net/http"
 
 	// "github.com/KalessinD/gophermart/internal/models"
 	middleware "github.com/KalessinD/gophermart/internal/middleware"
+	model "github.com/KalessinD/gophermart/internal/models"
 	service "github.com/KalessinD/gophermart/internal/services"
 )
 
 const HeaderContentTypeJSON = "application/json"
 
 type CommonHandler struct {
-	metricsService service.UserCommonActions
+	commonService service.UserCommonActions
 }
 
-func NewCommonHandler(metricService service.UserCommonActions) *CommonHandler {
+func NewCommonHandler(commonService service.UserCommonActions) *CommonHandler {
 	return &CommonHandler{
-		metricsService: metricService,
+		commonService: commonService,
 	}
 }
 
@@ -29,6 +31,31 @@ func (h *CommonHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	contentType := r.Header.Get("Content-Type")
+	if contentType != "application/json" {
+		log.Debug("Bad request")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		log.Sugar().Debugf("Bad request: %s", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	user, err := model.FromJSON(body)
+	if err != nil {
+		log.Sugar().Debugf("Can't parse JSON: %s", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	err = h.commonService.Login(user)
+
+	_ = err
+
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -40,6 +67,31 @@ func (h *CommonHandler) Register(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
+
+	contentType := r.Header.Get("Content-Type")
+	if contentType != "application/json" {
+		log.Debug("Bad request")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		log.Sugar().Debugf("Bad request: %s", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	user, err := model.FromJSON(body)
+	if err != nil {
+		log.Sugar().Debugf("Can't parse JSON: %s", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	err = h.commonService.Register(user)
+
+	_ = err
 
 	w.WriteHeader(http.StatusOK)
 }

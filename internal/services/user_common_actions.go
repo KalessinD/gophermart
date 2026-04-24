@@ -1,28 +1,53 @@
 package servives
 
-import "database/sql"
+import (
+	"errors"
+
+	"github.com/KalessinD/gophermart/internal/models"
+	repository "github.com/KalessinD/gophermart/internal/repositories"
+)
 
 type (
 	CommonAction struct {
-		database *sql.DB
+		db repository.SQLStorageInterface
 	}
 
 	UserCommonActions interface {
-		Login() error
-		Register() error
+		Login(user *models.User) error
+		Register(user *models.User) error
 	}
 )
 
-func NewCommonAction() UserCommonActions {
+/*
+Конструктор службы для операций нетребующих авторизации пользователя.
+*/
+func NewCommonAction(db repository.SQLStorageInterface) UserCommonActions {
 	return &CommonAction{
-		database: nil,
+		db: db,
 	}
 }
 
-func (s CommonAction) Login() error {
-	return nil
+/*
+Выполняет вход в систему.
+Может вернуть ошибку, если таковая произошла
+*/
+func (s *CommonAction) Login(user *models.User) error {
+	return s.validate(user)
 }
 
-func (s CommonAction) Register() error {
+/*
+Выполняет регистрацию новоого пользователя в системе.
+Может вернуть ошибку, если таковая произошла
+*/
+func (s *CommonAction) Register(user *models.User) error {
+	return s.validate(user)
+}
+
+func (s *CommonAction) validate(user *models.User) error {
+	if user.Login == "" {
+		return errors.New("wrong login format")
+	} else if user.Password == "" {
+		return errors.New("wrong password format")
+	}
 	return nil
 }
