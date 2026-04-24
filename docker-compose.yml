@@ -6,11 +6,11 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: practicum
+      POSTGRES_USER: gophermart
       POSTGRES_PASSWORD: secret
       POSTGRES_DB: yp
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/tmp/postgresql_gophermart_data
 
 volumes:
   postgres_data:

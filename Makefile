@@ -136,7 +136,7 @@ test: test-go test-yp # Runs tests
 test-go: # Runs golang tests
 	$(NOECHO) $(call print_title,"Running tests: golang")
 	$(NOECHO) $(GO) clean -testcache
-	$(NOECHO) $(GO) test -v -race -cover ./...
+	$(NOECHO) $(GO) test -buildvcs=false -v -race -cover ./...
 
 test-yp: stop-docker start-docker check-binaries
 	$(NOECHO) $(call print_title,"Running Yandex.Practicum tests")
@@ -171,8 +171,7 @@ test-yp-custom: clone-yp-autotest # Runs Yandex.Practicum test cases
 
 coverage: # Runs tests and shows total coverage
 	$(NOECHO) $(call print_title,"Running tests with coverage")
-	$(NOECHO) $(GO) test -v -race -coverprofile=$(GO_COVERAGE_REPORT) $(GO_PACKAGES)
-	# $(NOECHO) $(GO) test -v -race -coverprofile=$(GO_COVERAGE_REPORT) ./...
+	$(NOECHO) $(GO) test -buildvcs=false -v -race -coverprofile=$(GO_COVERAGE_REPORT) $(GO_PACKAGES)
 	$(NOECHO) $(GO) tool cover -func=$(GO_COVERAGE_REPORT)
 
 coverage-html: # Generates HTML coverage report and opens it

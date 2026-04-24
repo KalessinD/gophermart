@@ -36,6 +36,10 @@ func runHTTPServer(cfg *config.GophermartConfig, log *zap.Logger) error {
 		return err
 	}
 
+	if err = connect_db_and_apply_migration(rootCtx, cfg, log); err != nil {
+		return err
+	}
+
 	server := &http.Server{
 		Addr:              cfg.ListenAddr,
 		Handler:           router,
@@ -56,7 +60,31 @@ func runHTTPServer(cfg *config.GophermartConfig, log *zap.Logger) error {
 		}
 	}()
 
+
+
 	return waitServer(rootCtx, server, errCh, cfg, log)
+}
+
+func connect_db_and_apply_migration(ctx context.Context, cfg *config.GophermartConfig, log *zap.Logger) error {
+	if cfg.PsqlDSN == "" {
+		return errors.New("database_dsn is empty")
+	}
+
+	pgdb, err := gm.PsqlConnect(ctx, cfg.PsqlDSN, log)
+	if err != nil {
+		return err
+	}
+
+	migrations := []string{"migrations/000001_init_project.up.sql"}
+	migrator := gm.NewPgMigrator(pgdb)
+
+	err = migrator.Apply(ctx, cfg.PsqlDSN, migrations)
+	if err != nil {
+		log.Error("Can't apply migration", zap.Error(err))
+		return err
+	}
+
+	return nil
 }
 
 func run() error {

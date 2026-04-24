@@ -40,11 +40,18 @@ jobs:
           out-file-path: .tools
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Configure Git safe directory
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
       - name: Setup autotest binary
         run: |
           chmod -R +x $GITHUB_WORKSPACE/.tools
           mv $GITHUB_WORKSPACE/.tools/gophermarttest /usr/local/bin/gophermarttest
           mv $GITHUB_WORKSPACE/.tools/random /usr/local/bin/random
+
+      - name: Run Lint
+        run: |
+          make lint
 
       - name: Prepare binaries
         run: |
@@ -63,10 +70,6 @@ jobs:
             -accrual-host=localhost \
             -accrual-port=$(random unused-port) \
             -accrual-database-uri="postgresql://postgres:postgres@postgres/praktikum?sslmode=disable"
-
-      - name: Run Coverage
-        run: |
-          make coverage
 
       - name: Generate Coverage Report for GitHub
         if: always()
