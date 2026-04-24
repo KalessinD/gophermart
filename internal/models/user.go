@@ -9,15 +9,21 @@ import (
 var ErrUserNotFound = errors.New("user not found")
 
 type (
+	/*
+		Объект пользователя системы
+	*/
 	User struct {
 		Login        string    `json:"login"`
-		PasswordHash string    `json:"-"`
 		Password     string    `json:"-"`
+		PasswordHash string    `json:"-"`
 		Salt         string    `json:"-"`
 		LastLogin    time.Time `json:"value,omitempty"`
 		CreatedAt    time.Time `json:"hash,omitempty"`
 	}
 
+	/*
+		Интерфейс объекта пользователя системы
+	*/
 	UserInterface interface {
 		ToJSON() ([]byte, error)
 	}

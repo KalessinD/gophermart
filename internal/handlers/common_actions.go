@@ -52,7 +52,7 @@ func (h *CommonHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.commonService.Login(user)
+	err = h.commonService.Login(r.Context(), user)
 
 	_ = err
 
@@ -89,7 +89,7 @@ func (h *CommonHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.commonService.Register(user)
+	err = h.commonService.Register(r.Context(), user)
 
 	_ = err
 

@@ -25,7 +25,7 @@ type (
 	}
 
 	SQLStorageInterface interface {
-		GetUser(ctx context.Context) *model.User
+		GetUser(ctx context.Context, login string) (*model.User, error)
 		AddUser(ctx context.Context, user *model.User) error
 		Ping(ctx context.Context) error
 	}
@@ -39,8 +39,8 @@ func (r *SQLStorage) Ping(ctx context.Context) error {
 	return r.db.PingContext(ctx)
 }
 
-func (r *SQLStorage) GetUser(_ context.Context) *model.User {
-	return nil
+func (r *SQLStorage) GetUser(_ context.Context, _ string) (*model.User, error) {
+	return model.NewUser("", "", "", ""), nil
 }
 
 func (r *SQLStorage) AddUser(_ context.Context, _ *model.User) error {
