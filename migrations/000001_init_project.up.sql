@@ -4,9 +4,8 @@ CREATE SCHEMA IF NOT EXISTS gophermart;
 
 CREATE TABLE IF NOT EXISTS gophermart.users (
     login varchar(32) NOT NULL,
-    password varchar(128) NOT NULL,
+    hash varchar(128) NOT NULL,
     salt varchar(16) NOT NULL,
-    last_login TIMESTAMP DEFAULT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
@@ -17,9 +16,8 @@ CREATE INDEX IF NOT EXISTS login_idx ON gophermart.users USING hash(login);
 COMMENT ON TABLE gophermart.users IS 'Таблица пользователей сервиса';
 
 COMMENT ON COLUMN gophermart.users.login IS 'Логин пользователя';
-COMMENT ON COLUMN gophermart.users.password IS 'Зашифрованный пароль пользователя';
+COMMENT ON COLUMN gophermart.users.hash IS 'Зашифрованный пароль пользователя';
 COMMENT ON COLUMN gophermart.users.salt IS 'Соль для хеширования пароля)';
-COMMENT ON COLUMN gophermart.users.last_login IS 'Время последнего входа';
 COMMENT ON COLUMN gophermart.users.created_at IS 'Время создание пользователя';
 
 DO $$ BEGIN

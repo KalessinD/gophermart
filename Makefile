@@ -170,7 +170,7 @@ test-yp-custom: clone-yp-autotest # Runs Yandex.Practicum test cases
 		-gophermart-database-uri $(YP_PSQL_DSN) \
 		-accrual-database-uri $(YP_PSQL_DSN) \
 		-gophermart-host $(GOPHERMART_HOST) \
-		-gophermart-port $(YP_GOPHERMART_PORT) \
+		-gophermart-port $(GOPHERMART_PORT) \
 		-accrual-host $(ACCRUAL_HOST) \
 		-accrual-port $(ACCRUAL_PORT)
 

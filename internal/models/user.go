@@ -13,12 +13,11 @@ type (
 		Объект пользователя системы
 	*/
 	User struct {
-		Login        string    `json:"login"`
-		Password     string    `json:"-"`
-		PasswordHash string    `json:"-"`
-		Salt         string    `json:"-"`
-		LastLogin    time.Time `json:"value,omitempty"`
-		CreatedAt    time.Time `json:"hash,omitempty"`
+		Login     string    `json:"login"`
+		Password  string    `json:"-"`
+		Hash      string    `json:"-"`
+		Salt      string    `json:"-"`
+		CreatedAt time.Time `json:"hash,omitempty"`
 	}
 
 	/*
@@ -33,7 +32,7 @@ type (
 Конструктор объекта пользователя.
 */
 func NewUser(login, password, hash, salt string) *User {
-	return &User{Login: login, Password: password, PasswordHash: hash, Salt: salt}
+	return &User{Login: login, Password: password, Hash: hash, Salt: salt}
 }
 
 /*
