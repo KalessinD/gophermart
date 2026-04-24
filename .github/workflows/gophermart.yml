@@ -64,6 +64,10 @@ jobs:
             -accrual-port=$(random unused-port) \
             -accrual-database-uri="postgresql://postgres:postgres@postgres/praktikum?sslmode=disable"
 
+      - name: Run Coverage
+        run: |
+          make coverage
+
       - name: Generate Coverage Report for GitHub
         if: always()
         run: |
