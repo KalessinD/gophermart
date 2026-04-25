@@ -49,11 +49,12 @@ func (s *CommonAction) Login(ctx context.Context, userFromRequest *models.User) 
 	}
 
 	userFromDb, err := s.db.GetUser(ctx, userFromRequest.Login)
-	if err != nil {
+	switch {
+	case err != nil:
 		return err
-	} else if userFromDb == nil {
+	case userFromDb == nil:
 		return models.ErrUserNotFound
-	} else if userFromDb.Hash != userFromRequest.Hash {
+	case userFromDb.Hash != userFromRequest.Hash:
 		return models.ErrWrongPassword
 	}
 

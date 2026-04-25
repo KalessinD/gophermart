@@ -25,7 +25,7 @@ type (
 		Объект пользователя системы
 	*/
 	User struct {
-		Id        string    `json:"id"`
+		ID        string    `json:"id"`
 		Login     string    `json:"login"`
 		Password  string    `json:"-"`
 		Hash      string    `json:"-"`
@@ -65,8 +65,8 @@ func (u *User) Validate() error {
 Сериализует объект пользователя в строку JSON
 Может вернуть ошибку, коли та случится.
 */
-func (m *User) ToJSON() ([]byte, error) {
-	return json.Marshal(m)
+func (u *User) ToJSON() ([]byte, error) {
+	return json.Marshal(u)
 }
 
 /*

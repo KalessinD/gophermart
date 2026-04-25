@@ -63,7 +63,7 @@ func (r *SQLStorage) GetUser(ctx context.Context, login string) (*model.User, er
 	}
 
 	user := &model.User{}
-	err = row.Scan(&user.Id, &user.Login, &user.Hash, &user.Version, &user.CreatedAt)
+	err = row.Scan(&user.ID, &user.Login, &user.Hash, &user.Version, &user.CreatedAt)
 	if err != nil {
 		return nil, err
 	}

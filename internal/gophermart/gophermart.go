@@ -66,14 +66,20 @@ func NewRouter(cfg *config.GophermartConfig, log *zap.Logger, pgdb *sql.DB) (htt
 		r.Post("/register", commonUserHandler.Register)
 	})
 
+	restrictedUserHandler := handler.NewRestrictedHandler(
+		service.NewCommonAction(
+			repository.NewSQLStorage(pgdb),
+		),
+	)
+
 	// JWT Auth
 	router.Group(func(r chi.Router) {
 		// r.Use(AuthMiddleware)
-		// r.Post("orders", authUserHandler.AddOrder)
-		// r.Get("orders", authUserHandler.ListOrders)
-		// r.Get("balance", authUserHandler.GetLoyalityBalance)
-		// r.Post("balance/withdraw", authUserHandler.WithdrawBalance)
-		// r.Get("withdrawals", authUserHandler.ListWithdrawals)
+		r.Post("orders", restrictedUserHandler.AddOrder)
+		r.Get("orders", restrictedUserHandler.ListOrders)
+		r.Get("balance", restrictedUserHandler.GetLoyalityBalance)
+		r.Post("balance/withdraw", restrictedUserHandler.WithdrawBalance)
+		r.Get("withdrawals", restrictedUserHandler.ListWithdrawals)
 	})
 
 	return router, nil
