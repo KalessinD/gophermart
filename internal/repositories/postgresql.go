@@ -20,16 +20,16 @@ const (
 	PsqlUserTable   = "users"
 
 	QueryInsertUser = `
-		INSERT INTO "` + PsqlUsersSchema + `"."` + PsqlUserTable + `" AS t (login, hash, salt)
+		INSERT INTO "` + PsqlUsersSchema + `"."` + PsqlUserTable + `" AS t (login, hash)
         VALUES($1, $2, $3)
 		`
 
-	QuerySelectUser = `SELECT login, hash, salt, created_at FROM "` + PsqlUsersSchema + `"."` + PsqlUserTable + `" WHERE login = $1`
+	QuerySelectUser = `SELECT login, hash, version, created_at FROM "` + PsqlUsersSchema + `"."` + PsqlUserTable + `" WHERE login = $1`
 )
 
 type (
 	txWrapperFunc func(tx *sql.Tx) error
-	wrapperFunc   func(ctx context.Context) (any, error)
+	wrapperFunc   func(ctx context.Context) (*sql.Row, error)
 
 	SQLStorage struct {
 		db *sql.DB
@@ -51,7 +51,7 @@ func (r *SQLStorage) Ping(ctx context.Context) error {
 }
 
 func (r *SQLStorage) GetUser(ctx context.Context, login string) (*model.User, error) {
-	obj, err := r.withRetry(ctx, func(ctx context.Context) (any, error) {
+	row, err := r.withRetry(ctx, func(ctx context.Context) (*sql.Row, error) {
 		row := r.db.QueryRowContext(ctx, QuerySelectUser, login)
 		if row.Err() != nil {
 			return nil, row.Err()
@@ -62,13 +62,8 @@ func (r *SQLStorage) GetUser(ctx context.Context, login string) (*model.User, er
 		return nil, err
 	}
 
-	row, ok := obj.(*sql.Row)
-	if !ok {
-		return nil, errors.New("unexpected type")
-	}
-
 	user := &model.User{}
-	err = row.Scan(&user.Login, &user.Hash, &user.Salt, &user.CreatedAt)
+	err = row.Scan(&user.Login, &user.Hash, &user.Version, &user.CreatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -86,11 +81,11 @@ func (r *SQLStorage) AddUser(ctx context.Context, user *model.User) error {
 }
 
 func (r *SQLStorage) addUserTx(ctx context.Context, tx *sql.Tx, user *model.User) error {
-	_, err := tx.ExecContext(ctx, QueryInsertUser, user.Login, user.Hash, user.Salt)
+	_, err := tx.ExecContext(ctx, QueryInsertUser, user.Login, user.Hash)
 	return err
 }
 
-func (r *SQLStorage) withRetry(ctx context.Context, action wrapperFunc) (any, error) {
+func (r *SQLStorage) withRetry(ctx context.Context, action wrapperFunc) (*sql.Row, error) {
 	var err error
 
 	for attempts := 0; attempts < RetryingAttempts; attempts++ {

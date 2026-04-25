@@ -60,17 +60,20 @@ func NewRouter(cfg *config.GophermartConfig, log *zap.Logger, pgdb *sql.DB) (htt
 		),
 	)
 
+	// свободный доступ
 	router.Route("/api/user/", func(r chi.Router) {
 		r.Post("/login", commonUserHandler.Login)
 		r.Post("/register", commonUserHandler.Register)
+	})
 
-		/* JWT Auth
-		r.Post("orders", authUserHandler.AddOrder)
-		r.Get("orders", authUserHandler.ListOrders)
-		r.Get("balance", authUserHandler.GetLoyalityBalance)
-		r.Post("balance/withdraw", authUserHandler.WithdrawBalance)
-		r.Get("withdrawals", authUserHandler.ListWithdrawals)
-		*/
+	// JWT Auth
+	router.Group(func(r chi.Router) {
+		// r.Use(AuthMiddleware)
+		// r.Post("orders", authUserHandler.AddOrder)
+		// r.Get("orders", authUserHandler.ListOrders)
+		// r.Get("balance", authUserHandler.GetLoyalityBalance)
+		// r.Post("balance/withdraw", authUserHandler.WithdrawBalance)
+		// r.Get("withdrawals", authUserHandler.ListWithdrawals)
 	})
 
 	return router, nil

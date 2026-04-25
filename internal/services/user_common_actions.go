@@ -6,6 +6,8 @@ import (
 
 	"github.com/KalessinD/gophermart/internal/models"
 	repository "github.com/KalessinD/gophermart/internal/repositories"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type (
@@ -55,6 +57,9 @@ func (s *CommonAction) Register(ctx context.Context, user *models.User) error {
 	if err := s.validate(user); err != nil {
 		return err
 	}
+	if err := s.fillUserIfRequired(user); err != nil {
+		return err
+	}
 	return s.db.AddUser(ctx, user)
 }
 
@@ -65,4 +70,23 @@ func (s *CommonAction) validate(user *models.User) error {
 		return errors.New("wrong password format")
 	}
 	return nil
+}
+
+func (s *CommonAction) fillUserIfRequired(user *models.User) error {
+	// нечего хешировать, а ничего более тут пока дозаполнять и не надо
+	if user.Password == "" || user.Hash == "" {
+		return nil
+	}
+	hash, err := s.hashPassword(user.Password)
+	if err == nil {
+		user.Hash = hash
+	}
+	return err
+}
+
+func (s *CommonAction) hashPassword(password string) (string, error) {
+	// Cost 10 — это баланс между безопасностью и скоростью.
+	// Чем выше число, тем медленнее считается хеш, тем сложнее подобрать пароль.
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	return string(bytes), err
 }
