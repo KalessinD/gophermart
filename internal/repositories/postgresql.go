@@ -82,7 +82,16 @@ func (r *SQLStorage) AddUser(ctx context.Context, user *model.User) error {
 
 func (r *SQLStorage) addUserTx(ctx context.Context, tx *sql.Tx, user *model.User) error {
 	_, err := tx.ExecContext(ctx, QueryInsertUser, user.Login, user.Hash)
-	return err
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			if pgErr.Code == "23505" { // unique constraint violation (login or id)
+				return model.ErrUserExists
+			}
+		}
+		return err
+	}
+	return nil
 }
 
 func (r *SQLStorage) withRetry(ctx context.Context, action wrapperFunc) (*sql.Row, error) {

@@ -3,10 +3,22 @@ package models
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 )
 
-var ErrUserNotFound = errors.New("user not found")
+const (
+	MinPasswordLength = 8
+	MinLoginLength    = 4
+)
+
+var (
+	ErrUserNotFound        = errors.New("user not found")
+	ErrWrongPassword       = errors.New("wrong password")
+	ErrUserExists          = errors.New("user exists")
+	ErrWrongLoginLength    = fmt.Errorf("login length should be at least %d characters", MinLoginLength)
+	ErrWrongPasswordLength = fmt.Errorf("password length should be at least %d characters", MinPasswordLength)
+)
 
 type (
 	/*
@@ -26,6 +38,7 @@ type (
 	*/
 	UserInterface interface {
 		ToJSON() ([]byte, error)
+		Validate() error
 	}
 )
 
@@ -34,6 +47,18 @@ type (
 */
 func NewUser(login, password, hash string, version int) *User {
 	return &User{Login: login, Password: password, Hash: hash, Version: version}
+}
+
+/*
+Валидация длины логина и пароля
+*/
+func (u *User) Validate() error {
+	if len(u.Login) < MinLoginLength {
+		return ErrWrongLoginLength
+	} else if len(u.Password) < MinPasswordLength {
+		return ErrWrongPasswordLength
+	}
+	return nil
 }
 
 /*

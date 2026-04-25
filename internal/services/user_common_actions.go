@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"errors"
 
 	"github.com/KalessinD/gophermart/internal/models"
 	repository "github.com/KalessinD/gophermart/internal/repositories"
@@ -41,12 +40,24 @@ func NewCommonAction(db repository.SQLStorageInterface) UserCommonActions {
 Может вернуть ошибку, если таковая произошла
 */
 func (s *CommonAction) Login(ctx context.Context, userFromRequest *models.User) error {
-	if err := s.validate(userFromRequest); err != nil {
+	if err := userFromRequest.Validate(); err != nil {
 		return err
 	}
+
+	if err := s.fillUserIfRequired(userFromRequest); err != nil {
+		return err
+	}
+
 	userFromDb, err := s.db.GetUser(ctx, userFromRequest.Login)
-	_ = userFromDb
-	return err
+	if err != nil {
+		return err
+	} else if userFromDb == nil {
+		return models.ErrUserNotFound
+	} else if userFromDb.Hash != userFromRequest.Hash {
+		return models.ErrWrongPassword
+	}
+
+	return nil
 }
 
 /*
@@ -54,22 +65,13 @@ func (s *CommonAction) Login(ctx context.Context, userFromRequest *models.User) 
 Может вернуть ошибку, если таковая произошла
 */
 func (s *CommonAction) Register(ctx context.Context, user *models.User) error {
-	if err := s.validate(user); err != nil {
+	if err := user.Validate(); err != nil {
 		return err
 	}
 	if err := s.fillUserIfRequired(user); err != nil {
 		return err
 	}
 	return s.db.AddUser(ctx, user)
-}
-
-func (s *CommonAction) validate(user *models.User) error {
-	if user.Login == "" {
-		return errors.New("wrong login format")
-	} else if user.Password == "" {
-		return errors.New("wrong password format")
-	}
-	return nil
 }
 
 func (s *CommonAction) fillUserIfRequired(user *models.User) error {
