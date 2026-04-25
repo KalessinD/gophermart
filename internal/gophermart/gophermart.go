@@ -61,8 +61,8 @@ func NewRouter(cfg *config.GophermartConfig, log *zap.Logger, pgdb *sql.DB) (htt
 	)
 
 	router.Route("/api/user/", func(r chi.Router) {
-		r.Post("login", commonUserHandler.Login)
-		r.Post("register", commonUserHandler.Register)
+		r.Post("/login", commonUserHandler.Login)
+		r.Post("/register", commonUserHandler.Register)
 
 		/* JWT Auth
 		r.Post("orders", authUserHandler.AddOrder)

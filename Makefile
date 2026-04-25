@@ -51,6 +51,7 @@ ACCRUAL_CMD := $(PROJECT_DIR)/cmd/accrual
 ACCRUAL_BIN := $(ACCRUAL_CMD)/accrual_$(OS)_$(ARCH)
 ACCRUAL_HOST ?= localhost
 ACCRUAL_PORT ?= 9081
+ACCRUAL_ADDRESS := http://$(ACCRUAL_HOST):$(ACCRUAL_PORT)
 
 GOPHERMART_LOG_FILE := $(TMPDIR)/practicum-gophermart.log
 GOPHERMART_PID_FILE := $(TMPDIR)/practicum-gophermart.pid
@@ -217,11 +218,8 @@ start-gophermart: # Starts the gophermart
 	fi
 	$(NOECHO) $(GOPHERMART_BIN) \
 		-d $(YP_PSQL_DSN) \
-		-a :$(YP_GOPHERMART_PORT) \
-		-i ${YP_GOPHERMART_STORE_INTERVAL} \
-		-f ${YP_GOPHERMART_STORE_FILE} \
-		-k $(YP_KEY) \
-		-r \
+		-a :$(GOPHERMART_PORT) \
+		-r $(ACCRUAL_ADDRESS) \
 		> $(GOPHERMART_LOG_FILE) 2>&1 & $(ECHO) $$! > $(GOPHERMART_PID_FILE)
 
 stop: stop-accrual stop-gophermart stop-docker # Stops the gophermart, the accrual and docker containers

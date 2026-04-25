@@ -17,6 +17,8 @@ import (
 	"github.com/KalessinD/gophermart/internal/logger"
 
 	"go.uber.org/zap"
+
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 func main() {
