@@ -24,7 +24,7 @@ const (
         VALUES($1, $2, $3)
 		`
 
-	QuerySelectUser = `SELECT login, hash, version, created_at FROM "` + PsqlUsersSchema + `"."` + PsqlUserTable + `" WHERE login = $1`
+	QuerySelectUser = `SELECT id, login, hash, version, created_at FROM "` + PsqlUsersSchema + `"."` + PsqlUserTable + `" WHERE login = $1`
 )
 
 type (
@@ -63,7 +63,7 @@ func (r *SQLStorage) GetUser(ctx context.Context, login string) (*model.User, er
 	}
 
 	user := &model.User{}
-	err = row.Scan(&user.Login, &user.Hash, &user.Version, &user.CreatedAt)
+	err = row.Scan(&user.Id, &user.Login, &user.Hash, &user.Version, &user.CreatedAt)
 	if err != nil {
 		return nil, err
 	}

@@ -13,6 +13,7 @@ type (
 		Объект пользователя системы
 	*/
 	User struct {
+		Id        string    `json:"id"`
 		Login     string    `json:"login"`
 		Password  string    `json:"-"`
 		Hash      string    `json:"-"`

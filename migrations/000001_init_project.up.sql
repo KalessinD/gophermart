@@ -3,18 +3,18 @@ BEGIN;
 CREATE SCHEMA IF NOT EXISTS gophermart;
 
 CREATE TABLE IF NOT EXISTS gophermart.users (
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     login varchar(32) NOT NULL,
     hash varchar(128) NOT NULL,
     version integer NOT NULL DEFAULT 0,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-ALTER TABLE gophermart.users ADD PRIMARY KEY(login);
-
-CREATE INDEX IF NOT EXISTS login_idx ON gophermart.users USING hash(login);
+CREATE UNIQUE INDEX IF NOT EXISTS login_idx ON gophermart.users USING BTREE(login);
 
 COMMENT ON TABLE gophermart.users IS 'Таблица пользователей сервиса';
 
+COMMENT ON COLUMN gophermart.users.id IS 'ID пользователя';
 COMMENT ON COLUMN gophermart.users.login IS 'Логин пользователя';
 COMMENT ON COLUMN gophermart.users.hash IS 'Зашифрованный пароль пользователя';
 COMMENT ON COLUMN gophermart.users.version IS 'Версия профиля';

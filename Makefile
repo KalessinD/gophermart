@@ -112,10 +112,11 @@ build-gophermart: # Builds gophermart's binary
 clean: # Removes binaries and logs
 	$(NOECHO) $(call print_title,"Removing built binaries and checkouted tests")
 	$(NOECHO) $(RM) $(GOPHERMART_BIN) \
-#		$(ACCRUAL_BIN) \
-		$(ACCRUAL_LOG_FILE) \
 		$(GOPHERMART_LOG_FILE) \
 		$(GO_COVERAGE_REPORT)
+#		$(ACCRUAL_BIN) \
+#		$(ACCRUAL_LOG_FILE) \
+
 
 lint: lint-vet lint-golangci # Runs linters from govet and golangci-lint respectively
 
