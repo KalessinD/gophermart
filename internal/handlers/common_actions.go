@@ -5,15 +5,23 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	middleware "github.com/KalessinD/gophermart/internal/middleware"
 	model "github.com/KalessinD/gophermart/internal/models"
 	service "github.com/KalessinD/gophermart/internal/services"
 )
 
+const (
+	TokenExpiration = time.Hour * 3
+	CookieTokenName = "token"
+	ParentPath      = "/api/user/"
+)
+
 type (
 	CommonHandler struct {
-		commonService service.UserCommonActions
+		service       service.UserCommonActions
+		encryptionkey string
 	}
 
 	CommonHandlerInterface interface {
@@ -25,9 +33,10 @@ type (
 /*
 Конструктор для хендлеров работающих без автоиизации
 */
-func NewCommonHandler(commonService service.UserCommonActions) CommonHandlerInterface {
+func NewCommonHandler(commonService service.UserCommonActions, encKey string) CommonHandlerInterface {
 	return &CommonHandler{
-		commonService: commonService,
+		service:       commonService,
+		encryptionkey: encKey,
 	}
 }
 
@@ -62,11 +71,29 @@ func (h *CommonHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = h.commonService.Login(ctx, user); err != nil {
+	if err = h.service.Login(ctx, user); err != nil {
 		log.Sugar().Debugf("login failed: %s", err)
 		h.setResponseStatusByError(w, err)
 		return
 	}
+
+	expireAt := time.Now().Add(TokenExpiration)
+	tokenString, err := h.service.GenerateToken(user, h.encryptionkey, expireAt)
+	if err != nil {
+		log.Sugar().Debugf("token generation failed: %s", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     CookieTokenName,
+		Value:    tokenString,
+		Expires:  expireAt,
+		Secure:   false,                // false только ради разработки
+		HttpOnly: true,                 // Защита от XSS (JS не может прочитать куку)
+		Path:     ParentPath,           // Доступна в /api/user
+		SameSite: http.SameSiteLaxMode, // Защита от CSRF
+	})
 
 	w.WriteHeader(http.StatusOK)
 }
@@ -101,7 +128,7 @@ func (h *CommonHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = h.commonService.Register(ctx, user); err != nil {
+	if err = h.service.Register(ctx, user); err != nil {
 		log.Sugar().Debugf("user registration failed: %s", err)
 		h.setResponseStatusByError(w, err)
 		return

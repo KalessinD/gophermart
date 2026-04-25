@@ -58,6 +58,7 @@ func NewRouter(cfg *config.GophermartConfig, log *zap.Logger, pgdb *sql.DB) (htt
 		service.NewCommonAction(
 			repository.NewSQLStorage(pgdb),
 		),
+		cfg.EncryptionKey,
 	)
 
 	// свободный доступ
@@ -74,12 +75,13 @@ func NewRouter(cfg *config.GophermartConfig, log *zap.Logger, pgdb *sql.DB) (htt
 
 	// JWT Auth
 	router.Group(func(r chi.Router) {
-		// r.Use(AuthMiddleware)
-		r.Post("orders", restrictedUserHandler.AddOrder)
-		r.Get("orders", restrictedUserHandler.ListOrders)
-		r.Get("balance", restrictedUserHandler.GetLoyalityBalance)
-		r.Post("balance/withdraw", restrictedUserHandler.WithdrawBalance)
-		r.Get("withdrawals", restrictedUserHandler.ListWithdrawals)
+		r.Use(mw.AuthMiddleware)
+
+		r.Post("/orders", restrictedUserHandler.AddOrder)
+		r.Get("/orders", restrictedUserHandler.ListOrders)
+		r.Get("/balance", restrictedUserHandler.GetLoyalityBalance)
+		r.Post("/balance/withdraw", restrictedUserHandler.WithdrawBalance)
+		r.Get("/withdrawals", restrictedUserHandler.ListWithdrawals)
 	})
 
 	return router, nil

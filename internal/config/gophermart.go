@@ -1,7 +1,10 @@
 package config
 
 import (
+	"encoding/hex"
+	"errors"
 	"flag"
+	"fmt"
 	"time"
 )
 
@@ -14,8 +17,10 @@ const (
 	DefaultIdleTimeout              time.Duration = 30 * time.Second
 	DefaultGracefullShutdownTimeout time.Duration = 5 * time.Second
 	DefaultPsqlDSN                  string        = ""
-	DefaultServerEncryptionKey      string        = "secret"
 	DefaultAccrualAddress           string        = ""
+
+	// got by using `openssl rand -hex 32`
+	DefaultServerEncryptionKey string = "c7f7b4036a3fb58734412433cb7a2ed8dec913c650ef8475f05f5b36422cc18d"
 )
 
 type (
@@ -58,6 +63,12 @@ func (c *GophermartConfig) Validate() error {
 	if err := ValidateAddr(c.ListenAddr); err != nil {
 		return err
 	}
+	if c.EncryptionKey == "" {
+		return errors.New("encryption key can't be an ampty string")
+	}
+	if _, err := hex.DecodeString(c.EncryptionKey); err != nil {
+		return fmt.Errorf("can't decode encryption key (hex format was expected): %w", err)
+	}
 	return nil
 }
 
@@ -65,6 +76,7 @@ func (c *GophermartConfig) UpdateFromEnvironment() error {
 	c.ListenAddr = GetEnvOrFallback("RUN_ADDRESS", c.ListenAddr)
 	c.PsqlDSN = GetEnvOrFallback("DATABASE_URI", c.PsqlDSN)
 	c.AccrualAddress = GetEnvOrFallback("ACCRUAL_SYSTEM_ADDRESS", c.AccrualAddress)
+	c.EncryptionKey = GetEnvOrFallback("GOPHERMART_ENCRYPTION_KEY", c.EncryptionKey)
 	return nil
 }
 
