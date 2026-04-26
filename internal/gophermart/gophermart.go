@@ -77,11 +77,11 @@ func NewRouter(cfg *config.GophermartConfig, log *zap.Logger, pgdb *sql.DB) (htt
 	router.Group(func(r chi.Router) {
 		r.Use(mw.AuthMiddleware(cfg.EncryptionKey))
 
-		r.Post("/orders", restrictedUserHandler.AddOrder)
-		r.Get("/orders", restrictedUserHandler.ListOrders)
-		r.Get("/balance", restrictedUserHandler.GetLoyalityBalance)
-		r.Post("/balance/withdraw", restrictedUserHandler.WithdrawBalance)
-		r.Get("/withdrawals", restrictedUserHandler.ListWithdrawals)
+		r.Post("/api/user/orders", restrictedUserHandler.AddOrder)
+		r.Get("/api/user/orders", restrictedUserHandler.ListOrders)
+		r.Get("/api/user/balance", restrictedUserHandler.GetLoyalityBalance)
+		r.Post("/api/user/balance/withdraw", restrictedUserHandler.WithdrawBalance)
+		r.Get("/api/user/withdrawals", restrictedUserHandler.ListWithdrawals)
 	})
 
 	return router, nil

@@ -10,6 +10,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock" // Стандартная библиотека для моков SQL
 	"github.com/KalessinD/gophermart/internal/models"
 	"github.com/KalessinD/gophermart/internal/repositories/postgresql"
+	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -41,7 +42,7 @@ func TestSQLStorage_AddUser(t *testing.T) {
 		user := &models.User{Login: "existinguser", Hash: "secret"}
 
 		// Код 23505 - unique_violation
-		pgErr := &pgconn.PgError{Code: "23505", Message: "duplicate key value"}
+		pgErr := &pgconn.PgError{Code: pgerrcode.UniqueViolation, Message: "duplicate key value"}
 
 		mock.ExpectBegin()
 		mock.ExpectExec("INSERT").
@@ -73,7 +74,7 @@ func TestSQLStorage_AddUser(t *testing.T) {
 
 	t.Run("retry logic on insert", func(t *testing.T) {
 		user := &models.User{Login: "retry_insert", Hash: "hash"}
-		pgErr := &pgconn.PgError{Code: "08006"} // Connection failure
+		pgErr := &pgconn.PgError{Code: pgerrcode.ConnectionFailure}
 
 		// Два раза возвращаем ошибку
 		mock.ExpectBegin()

@@ -52,11 +52,11 @@ func TestNewRouter(t *testing.T) {
 		}{
 			{"POST", "/api/user/login"},
 			{"POST", "/api/user/register"},
-			{"POST", "/api/orders"},
-			{"GET", "/api/orders"},
-			{"GET", "/api/balance"},
-			{"POST", "/api/balance/withdraw"},
-			{"GET", "/api/withdrawals"},
+			{"POST", "/api/user/orders"},
+			{"GET", "/api/user/orders"},
+			{"GET", "/api/user/balance"},
+			{"POST", "/api/user/balance/withdraw"},
+			{"GET", "/api/user/withdrawals"},
 		}
 
 		for _, route := range routes {
@@ -81,11 +81,11 @@ func TestNewRouter(t *testing.T) {
 			method string
 			path   string
 		}{
-			{"POST", "/api/orders"},
-			{"GET", "/api/orders"},
-			{"GET", "/api/balance"},
-			{"POST", "/api/balance/withdraw"},
-			{"GET", "/api/withdrawals"},
+			{"POST", "/api/user/orders"},
+			{"GET", "/api/user/orders"},
+			{"GET", "/api/user/balance"},
+			{"POST", "/api/user/balance/withdraw"},
+			{"GET", "/api/user/withdrawals"},
 		}
 
 		for _, route := range protectedRoutes {

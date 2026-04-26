@@ -8,6 +8,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock" // Стандартная библиотека для моков SQL
 	"github.com/KalessinD/gophermart/internal/models"
 	"github.com/KalessinD/gophermart/internal/repositories/postgresql"
+	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -82,7 +83,7 @@ func TestSQLStorage_withTxRetry_via_AddUser(t *testing.T) {
 
 		// Симулируем ошибку, которую можно повторить (Code 08006 - Connection Failure)
 		pgErr := &pgconn.PgError{
-			Code:    "08006",
+			Code:    pgerrcode.ConnectionFailure,
 			Message: "connection error",
 		}
 
