@@ -45,7 +45,7 @@ func GetBaseRouter(cfg *config.GophermartConfig, log *zap.Logger) *chi.Mux {
 
 	router.Use(middleware.RequestID)
 	router.Use(middleware.Recoverer)
-	router.Use(mw.Middleware(log))
+	router.Use(mw.LoggerMiddleware(log))
 	router.Use(middleware.Timeout(cfg.ProcessingTimeout))
 
 	return router

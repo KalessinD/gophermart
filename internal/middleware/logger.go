@@ -32,22 +32,34 @@ func GetLogger(ctx context.Context) *zap.Logger {
 	return nil
 }
 
+/*
+Добавляет логгер в контекст
+*/
 func AddLoggerToContext(parentCtx context.Context, log *zap.Logger) context.Context {
 	return context.WithValue(parentCtx, LoggerKey, log)
 }
 
+/*
+Обёртка над http.ResponseWriter.Write
+*/
 func (r *loggingResponseWriter) Write(b []byte) (int, error) {
 	size, err := r.ResponseWriter.Write(b)
 	r.responseData.size += size
 	return size, err
 }
 
+/*
+Обёртка над http.ResponseWriter.Writeheader
+*/
 func (r *loggingResponseWriter) WriteHeader(statusCode int) {
 	r.ResponseWriter.WriteHeader(statusCode)
 	r.responseData.status = statusCode
 }
 
-func getEncodingField(prefix, name string, header http.Header) zap.Field {
+/*
+Из HTTP заголовков получает тип сжатия и добавляет его в zap-поле для логирования
+*/
+func GetEncodingField(prefix, name string, header http.Header) zap.Field {
 	enc := header[name]
 	if len(enc) == 0 {
 		return zap.Skip()
@@ -55,7 +67,22 @@ func getEncodingField(prefix, name string, header http.Header) zap.Field {
 	return zap.Strings(prefix+strings.ToLower(name), enc)
 }
 
-func Middleware(log *zap.Logger) func(http.Handler) http.Handler {
+/*
+Мидлварь для добавления zap-логера с кастомными полями в контекст.
+
+Добавляемые поля:
+  - method - HTTP method
+  - path - HTTP path
+  - remote_addr - remote IP address
+  - duration - время выполнения основной части запроса
+  - status - HTTP status code
+  - response_size - HTTP response size
+  - request-content-encoding - HTTP заголовок Content-Encoding из запроса
+  - request-accept-encoding - HTTP заголовок Accept-Encoding из запроса
+  - responsecontent-encoding - HTTP заголовок Content-Encoding из ответа
+  - response-accept-encoding - HTTP заголовок Accept-Encoding из ответа
+*/
+func LoggerMiddleware(log *zap.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
@@ -87,8 +114,8 @@ func Middleware(log *zap.Logger) func(http.Handler) http.Handler {
 				zap.Int("response_size", responseData.size),
 				zap.Strings("request-content-encoding", r.Header.Values("Content-Encoding")),
 				zap.Strings("request-accept-encoding", r.Header.Values("Accept-Encoding")),
-				getEncodingField("response-", "Content-Encoding", w.Header()),
-				getEncodingField("response-", "Accept-Encoding", w.Header()),
+				GetEncodingField("response-", "Content-Encoding", w.Header()),
+				GetEncodingField("response-", "Accept-Encoding", w.Header()),
 			)
 		})
 	}
