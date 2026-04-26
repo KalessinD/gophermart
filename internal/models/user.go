@@ -27,7 +27,7 @@ type (
 	User struct {
 		ID        string    `json:"id"`
 		Login     string    `json:"login"`
-		Password  string    `json:"-"`
+		Password  string    `json:"password"`
 		Hash      string    `json:"-"`
 		Version   int       `json:"version"`
 		CreatedAt time.Time `json:"hash,omitempty"`
@@ -73,8 +73,9 @@ func (u *User) ToJSON() ([]byte, error) {
 Десериализует строку JSON в объект пользователя.
 Может вернуть ошибку, коли та случится.
 */
-func FromJSON(str []byte) (user *User, err error) {
-	err = json.Unmarshal(str, user)
+func FromJSON(str []byte) (*User, error) {
+	user := &User{}
+	err := json.Unmarshal(str, user)
 	if err != nil {
 		return nil, err
 	}

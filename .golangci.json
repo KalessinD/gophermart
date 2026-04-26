@@ -70,7 +70,16 @@
         "common-false-positives",
         "legacy",
         "std-error-handling"
-      ]
+      ],
+      "rules": [
+        {
+          "linters": [
+            "gosec"
+          ],
+          "path": "internal/models/user.go",
+          "text": "G117: Marshaled struct field \"Password\""
+        }
+      ]      
     },
     "settings": {
       "bidichk": {
