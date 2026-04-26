@@ -70,10 +70,11 @@ func (r *SQLStorage) withRetry(ctx context.Context, action wrapperFunc) (*sql.Ro
 }
 
 func (r *SQLStorage) withTxRetry(ctx context.Context, action txWrapperFunc) error {
+	var tx *sql.Tx
 	var err error
 
 	for attempts := 0; attempts < RetryingAttempts; attempts++ {
-		tx, err := r.db.BeginTx(ctx, nil)
+		tx, err = r.db.BeginTx(ctx, nil)
 		if err != nil {
 			return err
 		}
