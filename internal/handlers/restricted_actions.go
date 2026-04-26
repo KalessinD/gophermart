@@ -80,7 +80,7 @@ func (h *RestrictedHandler) AddOrder(w http.ResponseWriter, r *http.Request) {
 	_ = orderNumber
 	// log.Sugar().Debug("aaaa ", orderNumber, middleware.GetClaims(r.Context()))
 
-	w.Header().Set("Content-Type", common.AppJSONContentType)
+	w.Header().Set("Content-Type", common.TextPlainContentType)
 	w.WriteHeader(http.StatusOK)
 }
 
