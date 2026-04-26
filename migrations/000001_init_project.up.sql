@@ -29,6 +29,7 @@ $$;
 
 CREATE TABLE IF NOT EXISTS gophermart.orders (
     id varchar(32) NOT NULL,
+    user_id UUID NOT NULL,
     status gophermart.order_status NOT NULL,
     money bigint DEFAULT 0,
     reward double precision DEFAULT NULL,
@@ -41,6 +42,7 @@ ALTER TABLE gophermart.orders ADD PRIMARY KEY(id);
 COMMENT ON TABLE gophermart.orders IS 'Таблица зазказов';
 
 COMMENT ON COLUMN gophermart.orders.id IS 'Уникальный идентификатор заказов';
+COMMENT ON COLUMN gophermart.orders.user_id IS 'ID пользователя';
 COMMENT ON COLUMN gophermart.orders.status IS 'Статус заказа';
 COMMENT ON COLUMN gophermart.orders.money IS 'Сумма заказа в копейках';
 COMMENT ON COLUMN gophermart.orders.reward IS 'Бонусное вознаграждение в копейках';
