@@ -153,7 +153,7 @@ func TestMiddleware(t *testing.T) {
 		}
 
 		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte("created"))
+		_, _ = w.Write([]byte("created"))
 	})
 
 	// Создаем запрос

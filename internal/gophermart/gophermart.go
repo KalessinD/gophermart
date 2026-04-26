@@ -75,7 +75,7 @@ func NewRouter(cfg *config.GophermartConfig, log *zap.Logger, pgdb *sql.DB) (htt
 
 	// JWT Auth
 	router.Group(func(r chi.Router) {
-		r.Use(mw.AuthMiddleware)
+		r.Use(mw.AuthMiddleware(cfg.EncryptionKey))
 
 		r.Post("/orders", restrictedUserHandler.AddOrder)
 		r.Get("/orders", restrictedUserHandler.ListOrders)
