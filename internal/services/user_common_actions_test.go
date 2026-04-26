@@ -34,7 +34,7 @@ func TestCommonAction_Register(t *testing.T) {
 		// Ожидаем, что AddUser будет вызван.
 		// Используем Do, чтобы проверить, что пароль был захеширован перед сохранением.
 		mockDB.EXPECT().AddUser(ctx, gomock.Any()).DoAndReturn(
-			func(ctx context.Context, u *models.User) error {
+			func(_ context.Context, u *models.User) error {
 				if u.Login != "testuser" {
 					t.Errorf("expected login testuser, got %s", u.Login)
 				}
@@ -168,7 +168,6 @@ func TestCommonAction_GenerateToken(t *testing.T) {
 			}
 			return []byte(secret), nil
 		})
-
 		if err != nil {
 			t.Fatalf("failed to parse token: %v", err)
 		}
