@@ -40,7 +40,7 @@ func TestAuthMiddleware(t *testing.T) {
 
 	// Хендлер, который просто проверяет наличие claims в контексте и возвращает 200
 	nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		claims := middleware.GetClaimsFromCtx(r.Context())
+		claims := middleware.GetClaims(r.Context())
 		if claims == nil {
 			t.Error("claims not found in context")
 			http.Error(w, "internal error", http.StatusInternalServerError)
@@ -127,7 +127,7 @@ func TestGetClaimsFromCtx(t *testing.T) {
 
 	t.Run("Claims not found", func(t *testing.T) {
 		// Проверяем, что функция не падает на пустом контексте
-		claims := middleware.GetClaimsFromCtx(context.Background())
+		claims := middleware.GetClaims(context.Background())
 		if claims != nil {
 			t.Error("expected nil for empty context")
 		}

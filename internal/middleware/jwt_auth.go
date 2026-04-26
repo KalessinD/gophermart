@@ -49,7 +49,7 @@ func AuthMiddleware(key string) func(http.Handler) http.Handler {
 }
 
 // Вспомогательная функция для получения данных из контекста
-func GetClaimsFromCtx(ctx context.Context) *common.Claims {
+func GetClaims(ctx context.Context) *common.Claims {
 	if claims, ok := ctx.Value(claimsKey).(*common.Claims); ok {
 		return claims
 	}

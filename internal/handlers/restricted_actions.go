@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"fmt"
+	"io"
 	"net/http"
 
 	// "github.com/KalessinD/gophermart/internal/models"
@@ -59,7 +61,24 @@ func (h *RestrictedHandler) AddOrder(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := middleware.GetLogger(ctx)
 
-	_ = log
+	contentType := r.Header.Get("Content-Type")
+	if contentType != common.TextPlainContentType {
+		err := fmt.Errorf("bad request: %s", "wrong content-type")
+		log.Sugar().Debugf("bad request: content-type is %s: %s", contentType, err.Error())
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		err = fmt.Errorf("bad request: %w", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	orderNumber := string(body)
+	_ = orderNumber
+	// log.Sugar().Debug("aaaa ", orderNumber, middleware.GetClaims(r.Context()))
 
 	w.Header().Set("Content-Type", common.AppJSONContentType)
 	w.WriteHeader(http.StatusOK)

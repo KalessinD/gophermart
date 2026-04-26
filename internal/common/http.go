@@ -1,5 +1,6 @@
 package common
 
 const (
-	AppJSONContentType = "application/json"
+	AppJSONContentType   = "application/json"
+	TextPlainContentType = "text/plain"
 )
