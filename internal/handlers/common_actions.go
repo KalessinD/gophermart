@@ -21,7 +21,7 @@ const (
 
 type (
 	CommonHandler struct {
-		service       service.UserCommonActions
+		service       service.CommonActionsInterface
 		encryptionkey string
 	}
 
@@ -34,7 +34,7 @@ type (
 /*
 Конструктор для хендлеров работающих без автоиизации
 */
-func NewCommonHandler(commonService service.UserCommonActions, encKey string) CommonHandlerInterface {
+func NewCommonHandler(commonService service.CommonActionsInterface, encKey string) CommonHandlerInterface {
 	return &CommonHandler{
 		service:       commonService,
 		encryptionkey: encKey,

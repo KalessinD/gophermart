@@ -17,14 +17,14 @@ type (
 	/*
 		Объект службы для действий пользователя, нетребующих авторизации
 	*/
-	CommonAction struct {
+	CommonActions struct {
 		db repository.SQLStorageInterface
 	}
 
 	/*
-		Интерфейс оОбъекта службы для действий пользователя, нетребующих авторизации
+		Интерфейс оОъекта службы для действий пользователя, нетребующих авторизации
 	*/
-	UserCommonActions interface {
+	CommonActionsInterface interface {
 		Login(ctx context.Context, user *models.User) error
 		Register(ctx context.Context, user *models.User) error
 		GenerateToken(user *models.User, key string, expireAt time.Time) (string, error)
@@ -34,8 +34,8 @@ type (
 /*
 Конструктор службы для операций нетребующих авторизации пользователя.
 */
-func NewCommonAction(db repository.SQLStorageInterface) UserCommonActions {
-	return &CommonAction{
+func NewCommonAction(db repository.SQLStorageInterface) CommonActionsInterface {
+	return &CommonActions{
 		db: db,
 	}
 }
@@ -44,7 +44,7 @@ func NewCommonAction(db repository.SQLStorageInterface) UserCommonActions {
 Выполняет вход в систему.
 Может вернуть ошибку, если таковая произошла
 */
-func (s *CommonAction) Login(ctx context.Context, userFromRequest *models.User) error {
+func (s *CommonActions) Login(ctx context.Context, userFromRequest *models.User) error {
 	if err := userFromRequest.Validate(); err != nil {
 		return err
 	}
@@ -70,7 +70,7 @@ func (s *CommonAction) Login(ctx context.Context, userFromRequest *models.User) 
 Выполняет регистрацию новоого пользователя в системе.
 Может вернуть ошибку, если таковая произошла
 */
-func (s *CommonAction) Register(ctx context.Context, user *models.User) error {
+func (s *CommonActions) Register(ctx context.Context, user *models.User) error {
 	if err := user.Validate(); err != nil {
 		return err
 	}
@@ -80,7 +80,7 @@ func (s *CommonAction) Register(ctx context.Context, user *models.User) error {
 	return s.db.AddUser(ctx, user)
 }
 
-func (s *CommonAction) fillUserIfRequired(user *models.User) error {
+func (s *CommonActions) fillUserIfRequired(user *models.User) error {
 	if user.Password != "" && user.Hash == "" {
 		hash, err := s.hashPassword(user.Password)
 		if err != nil {
@@ -91,7 +91,7 @@ func (s *CommonAction) fillUserIfRequired(user *models.User) error {
 	return nil
 }
 
-func (s *CommonAction) hashPassword(password string) (string, error) {
+func (s *CommonActions) hashPassword(password string) (string, error) {
 	// Cost 10 — это баланс между безопасностью и скоростью.
 	// Чем выше число, тем медленнее считается хеш, тем сложнее подобрать пароль.
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
@@ -101,7 +101,7 @@ func (s *CommonAction) hashPassword(password string) (string, error) {
 /*
 Генерирует JWT строку
 */
-func (s *CommonAction) GenerateToken(user *models.User, key string, expireAt time.Time) (string, error) {
+func (s *CommonActions) GenerateToken(user *models.User, key string, expireAt time.Time) (string, error) {
 	claims := &common.Claims{
 		UserID: user.ID,
 		Login:  user.Login,

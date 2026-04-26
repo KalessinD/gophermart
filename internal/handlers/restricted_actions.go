@@ -13,7 +13,7 @@ import (
 
 type (
 	RestrictedHandler struct {
-		commonService service.UserCommonActions
+		orderService service.OrderActionsInterface
 	}
 
 	RestrictedHandlerInterface interface {
@@ -28,9 +28,9 @@ type (
 /*
 Конструктор для хендлеров работающих с автоиизацией
 */
-func NewRestrictedHandler(commonService service.UserCommonActions) RestrictedHandlerInterface {
+func NewRestrictedHandler(orderService service.OrderActionsInterface) RestrictedHandlerInterface {
 	return &RestrictedHandler{
-		commonService: commonService,
+		orderService: orderService,
 	}
 }
 
@@ -77,9 +77,12 @@ func (h *RestrictedHandler) AddOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orderNumber := string(body)
-	_ = orderNumber
-	// log.Sugar().Debug("aaaa ", orderNumber, middleware.GetClaims(r.Context()))
+	err = h.orderService.Store(ctx, string(body))
+	if err != nil {
+		log.Errorf("bad request: %s", err.Error())
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
 	w.Header().Set("Content-Type", common.TextPlainContentType)
 	w.WriteHeader(http.StatusOK)

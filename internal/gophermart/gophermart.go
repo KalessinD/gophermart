@@ -68,7 +68,7 @@ func NewRouter(cfg *config.GophermartConfig, log *zap.Logger, pgdb *sql.DB) (htt
 	})
 
 	restrictedUserHandler := handler.NewRestrictedHandler(
-		service.NewCommonAction(
+		service.NewOrderActions(
 			repository.NewSQLStorage(pgdb),
 		),
 	)
