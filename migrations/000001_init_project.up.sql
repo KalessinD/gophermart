@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS gophermart.orders (
 
 ALTER TABLE gophermart.orders ADD PRIMARY KEY(id);
 
-COMMENT ON TABLE gophermart.orders IS 'Таблица зазказов';
+COMMENT ON TABLE gophermart.orders IS 'Таблица заказов';
 
 COMMENT ON COLUMN gophermart.orders.id IS 'Уникальный идентификатор заказов';
 COMMENT ON COLUMN gophermart.orders.user_id IS 'ID пользователя';
