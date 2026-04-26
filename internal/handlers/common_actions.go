@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/KalessinD/gophermart/internal/common"
 	middleware "github.com/KalessinD/gophermart/internal/middleware"
 	model "github.com/KalessinD/gophermart/internal/models"
 	service "github.com/KalessinD/gophermart/internal/services"
@@ -147,7 +148,7 @@ func (h *CommonHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 func (h *CommonHandler) commonChecks(w http.ResponseWriter, r *http.Request) (user *model.User, err error) {
 	contentType := r.Header.Get("Content-Type")
-	if contentType != "application/json" {
+	if contentType != common.AppJSONContentType {
 		err = fmt.Errorf("bad request: %s", "wrong content-type")
 		w.WriteHeader(http.StatusBadRequest)
 		return

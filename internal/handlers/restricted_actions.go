@@ -4,12 +4,9 @@ import (
 	"net/http"
 
 	// "github.com/KalessinD/gophermart/internal/models"
+	"github.com/KalessinD/gophermart/internal/common"
 	middleware "github.com/KalessinD/gophermart/internal/middleware"
 	service "github.com/KalessinD/gophermart/internal/services"
-)
-
-const (
-	DefaultContentType = "application/json"
 )
 
 type (
@@ -64,7 +61,7 @@ func (h *RestrictedHandler) AddOrder(w http.ResponseWriter, r *http.Request) {
 
 	_ = log
 
-	w.Header().Set("Content-Type", DefaultContentType)
+	w.Header().Set("Content-Type", common.AppJSONContentType)
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -117,7 +114,7 @@ func (h *RestrictedHandler) ListOrders(w http.ResponseWriter, r *http.Request) {
 
 	_ = log
 
-	w.Header().Set("Content-Type", DefaultContentType)
+	w.Header().Set("Content-Type", common.AppJSONContentType)
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -156,7 +153,7 @@ func (h *RestrictedHandler) GetLoyalityBalance(w http.ResponseWriter, r *http.Re
 
 	_ = log
 
-	w.Header().Set("Content-Type", DefaultContentType)
+	w.Header().Set("Content-Type", common.AppJSONContentType)
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -190,7 +187,7 @@ func (h *RestrictedHandler) WithdrawBalance(w http.ResponseWriter, r *http.Reque
 
 	_ = log
 
-	w.Header().Set("Content-Type", DefaultContentType)
+	w.Header().Set("Content-Type", common.AppJSONContentType)
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -231,6 +228,6 @@ func (h *RestrictedHandler) ListWithdrawals(w http.ResponseWriter, r *http.Reque
 
 	_ = log
 
-	w.Header().Set("Content-Type", DefaultContentType)
+	w.Header().Set("Content-Type", common.AppJSONContentType)
 	w.WriteHeader(http.StatusOK)
 }
