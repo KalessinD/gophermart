@@ -100,7 +100,7 @@ jobs:
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: /tmp/proxy-checker-coverage.out
+          files: /tmp/practicum-gophermart-coverage.out
           fail_ci_if_error: false
           flags: unittests
           verbose: true
