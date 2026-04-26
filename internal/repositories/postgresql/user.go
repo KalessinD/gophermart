@@ -6,13 +6,14 @@ import (
 	"errors"
 
 	model "github.com/KalessinD/gophermart/internal/models"
+	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
 const (
 	PsqlUserTable = `"` + PsqlGophermartSchema + `"."users"`
 
-	QueryInsertUser = `INSERT INTO ` + PsqlUserTable + ` AS t (login, hash) VALUES($1, $2)`
+	QueryInsertUser = `INSERT INTO ` + PsqlUserTable + ` AS t (login, hash) VALUES($1, $2) RETURNING id`
 
 	QuerySelectUser = `SELECT id, login, hash, version, created_at FROM ` + PsqlUserTable + ` WHERE login = $1`
 )
@@ -48,11 +49,11 @@ func (r *SQLStorage) AddUser(ctx context.Context, user *model.User) error {
 }
 
 func (r *SQLStorage) addUserTx(ctx context.Context, tx *sql.Tx, user *model.User) error {
-	_, err := tx.ExecContext(ctx, QueryInsertUser, user.Login, user.Hash)
+	err := tx.QueryRowContext(ctx, QueryInsertUser, user.Login, user.Hash).Scan(&user.ID)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
-			if pgErr.Code == "23505" { // unique constraint violation (login or id)
+			if pgErr.Code == pgerrcode.UniqueViolation {
 				return model.ErrUserExists
 			}
 		}
