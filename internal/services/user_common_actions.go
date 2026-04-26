@@ -49,17 +49,17 @@ func (s *CommonAction) Login(ctx context.Context, userFromRequest *models.User) 
 		return err
 	}
 
-	if err := s.fillUserIfRequired(userFromRequest); err != nil {
-		return err
-	}
-
 	userFromDb, err := s.db.GetUser(ctx, userFromRequest.Login)
 	switch {
 	case err != nil:
 		return err
 	case userFromDb == nil:
 		return models.ErrUserNotFound
-	case userFromDb.Hash != userFromRequest.Hash:
+	}
+
+	// bcrypt.CompareHashAndPassword сравнивает открытый пароль и хеш.
+	err = bcrypt.CompareHashAndPassword([]byte(userFromDb.Hash), []byte(userFromRequest.Password))
+	if err != nil {
 		return models.ErrWrongPassword
 	}
 
@@ -81,15 +81,14 @@ func (s *CommonAction) Register(ctx context.Context, user *models.User) error {
 }
 
 func (s *CommonAction) fillUserIfRequired(user *models.User) error {
-	// нечего хешировать, а ничего более тут пока дозаполнять и не надо
-	if user.Password == "" || user.Hash == "" {
-		return nil
-	}
-	hash, err := s.hashPassword(user.Password)
-	if err == nil {
+	if user.Password != "" && user.Hash == "" {
+		hash, err := s.hashPassword(user.Password)
+		if err != nil {
+			return err
+		}
 		user.Hash = hash
 	}
-	return err
+	return nil
 }
 
 func (s *CommonAction) hashPassword(password string) (string, error) {
