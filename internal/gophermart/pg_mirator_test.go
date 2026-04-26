@@ -26,7 +26,7 @@ func TestPgMigrator_Apply(t *testing.T) {
 		// Создаем временный файл с SQL
 		filePath := filepath.Join(tmpDir, "001_init.sql")
 		sqlContent := []byte("CREATE TABLE users (id INT);")
-		err := os.WriteFile(filePath, sqlContent, 0644)
+		err := os.WriteFile(filePath, sqlContent, 0o600)
 		require.NoError(t, err)
 
 		// Ожидаем выполнение именно этого SQL
@@ -52,7 +52,7 @@ func TestPgMigrator_Apply(t *testing.T) {
 	t.Run("sql execution error", func(t *testing.T) {
 		filePath := filepath.Join(tmpDir, "002_fail.sql")
 		sqlContent := []byte("BAD SQL SYNTAX")
-		err := os.WriteFile(filePath, sqlContent, 0644)
+		err := os.WriteFile(filePath, sqlContent, 0o600)
 		require.NoError(t, err)
 
 		// Эмулируем ошибку БД
@@ -74,11 +74,11 @@ func TestPgMigrator_Apply(t *testing.T) {
 		}
 
 		protectedDir := filepath.Join(tmpDir, "protected")
-		err := os.Mkdir(protectedDir, 0000) // никаких прав
+		err := os.Mkdir(protectedDir, 0o000) // никаких прав
 		require.NoError(t, err)
 
 		// Восстанавливаем права для очистки
-		defer os.Chmod(protectedDir, 0755)
+		defer func() { _ = os.Chmod(protectedDir, 0o755) }()
 
 		filePath := filepath.Join(protectedDir, "secret.sql")
 
@@ -91,7 +91,7 @@ func TestPgMigrator_Apply(t *testing.T) {
 	t.Run("read directory instead of file", func(t *testing.T) {
 		// Попытка "прочитать" директорию как файл вызовет ошибку (не IsNotExist)
 		dirPath := filepath.Join(tmpDir, "somedir")
-		err := os.Mkdir(dirPath, 0755)
+		err := os.Mkdir(dirPath, 0o755)
 		require.NoError(t, err)
 
 		err = migrator.Apply(context.Background(), "", []string{dirPath})
