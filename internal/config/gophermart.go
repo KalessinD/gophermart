@@ -89,7 +89,7 @@ func (c *GophermartConfig) UpdateFromCLIArgs(flagSet *flag.FlagSet, args []strin
 
 // Returns the instance of server configuration struct.
 //
-// Fills it's fileds by using CLI arguments and environments.
+// Fills it's fields by using CLI arguments and environments.
 // ENV or CLI argument or the default values
 func NewGophermartConfig(flagSet *flag.FlagSet, args []string) (*GophermartConfig, error) {
 	cfg := GetDefaultGophermartConfig()
