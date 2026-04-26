@@ -16,7 +16,6 @@ const (
 )
 
 // Middleware для проверки JWT
-
 func AuthMiddleware(key string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -35,7 +34,7 @@ func AuthMiddleware(key string) func(http.Handler) http.Handler {
 				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 					return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 				}
-				return key, nil
+				return []byte(key), nil
 			})
 
 			if err != nil || !token.Valid {
