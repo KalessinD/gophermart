@@ -67,18 +67,25 @@ func (h *CommonHandler) Login(w http.ResponseWriter, r *http.Request) {
 	log := middleware.GetLogger(ctx)
 	user, err := h.commonChecks(w, r)
 	if err != nil {
-		log.Sugar().Debugf("login failed: %s", err)
+		log.Sugar().Debugf("login failed: %s", err.Error())
 		return
 	}
 
 	if err = h.service.Login(ctx, user); err != nil {
-		log.Sugar().Debugf("login failed: %s", err)
-		h.setResponseStatusByError(w, err)
+		status := h.defineResponseStatusByError(err)
+		if status == http.StatusInternalServerError {
+			log.Sugar().Errorf("login failed: %s", err.Error())
+		} else {
+			log.Sugar().Debugf("login failed: %s", err.Error())
+		}
+
+		w.WriteHeader(status)
+
 		return
 	}
 
 	if err := h.setAuthCookie(w, user); err != nil {
-		log.Sugar().Debugf("setting auth cookie failed: %s", err)
+		log.Sugar().Errorf("setting auth cookie failed: %s", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -112,18 +119,25 @@ func (h *CommonHandler) Register(w http.ResponseWriter, r *http.Request) {
 	log := middleware.GetLogger(ctx)
 	user, err := h.commonChecks(w, r)
 	if err != nil {
-		log.Sugar().Debugf("user registration failed: %s", err)
+		log.Sugar().Debugf("user registration failed1: %s", err.Error())
 		return
 	}
 
 	if err = h.service.Register(ctx, user); err != nil {
-		log.Sugar().Debugf("user registration failed: %s", err)
-		h.setResponseStatusByError(w, err)
+		status := h.defineResponseStatusByError(err)
+		if status == http.StatusInternalServerError {
+			log.Sugar().Errorf("user registration failed2: %s", err.Error())
+		} else {
+			log.Sugar().Debugf("user registration failed3: %s", err.Error())
+		}
+
+		w.WriteHeader(status)
+
 		return
 	}
 
 	if err := h.setAuthCookie(w, user); err != nil {
-		log.Sugar().Debugf("setting auth cookie failed: %s", err)
+		log.Sugar().Errorf("setting auth cookie failed: %s", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -156,25 +170,23 @@ func (h *CommonHandler) commonChecks(w http.ResponseWriter, r *http.Request) (us
 	return
 }
 
-func (h *CommonHandler) setResponseStatusByError(w http.ResponseWriter, err error) {
-	if err == nil {
-		return
-	}
-
+func (h *CommonHandler) defineResponseStatusByError(err error) (status int) {
 	switch {
 	case errors.Is(err, model.ErrWrongLoginLength):
-		w.WriteHeader(http.StatusBadRequest)
+		status = http.StatusBadRequest
 	case errors.Is(err, model.ErrWrongPasswordLength):
-		w.WriteHeader(http.StatusBadRequest)
+		status = http.StatusBadRequest
 	case errors.Is(err, model.ErrUserNotFound):
-		w.WriteHeader(http.StatusUnauthorized)
+		status = http.StatusUnauthorized
 	case errors.Is(err, model.ErrWrongPassword):
-		w.WriteHeader(http.StatusUnauthorized)
+		status = http.StatusUnauthorized
 	case errors.Is(err, model.ErrUserExists):
-		w.WriteHeader(http.StatusConflict)
+		status = http.StatusConflict
 	default:
-		w.WriteHeader(http.StatusInternalServerError)
+		status = http.StatusInternalServerError
 	}
+
+	return
 }
 
 func (h *CommonHandler) setAuthCookie(w http.ResponseWriter, user *model.User) error {

@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	handler "github.com/KalessinD/gophermart/internal/handlers"
-	repository "github.com/KalessinD/gophermart/internal/repositories"
+	repository "github.com/KalessinD/gophermart/internal/repositories/postgresql"
 	service "github.com/KalessinD/gophermart/internal/services"
 
 	"github.com/KalessinD/gophermart/internal/config"

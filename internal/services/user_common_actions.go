@@ -6,7 +6,7 @@ import (
 
 	"github.com/KalessinD/gophermart/internal/common"
 	"github.com/KalessinD/gophermart/internal/models"
-	repository "github.com/KalessinD/gophermart/internal/repositories"
+	repository "github.com/KalessinD/gophermart/internal/repositories/postgresql"
 	"github.com/golang-jwt/jwt/v5"
 
 	"golang.org/x/crypto/bcrypt"
