@@ -161,7 +161,6 @@ func (h *CommonHandler) commonChecks(w http.ResponseWriter, r *http.Request) (us
 		return
 	}
 
-	// user, err = model.UserFromJSON(body)
 	user, err = model.FromJSON[model.User](body)
 	if err != nil {
 		err = fmt.Errorf("can't parse request body: %w", err)
