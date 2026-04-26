@@ -59,12 +59,12 @@ Content-Type: text/plain
 */
 func (h *RestrictedHandler) AddOrder(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	log := middleware.GetLogger(ctx)
+	log := middleware.GetLogger(ctx).Sugar()
 
 	contentType := r.Header.Get("Content-Type")
 	if contentType != common.TextPlainContentType {
 		err := fmt.Errorf("bad request: %s", "wrong content-type")
-		log.Sugar().Debugf("bad request: content-type is %s: %s", contentType, err.Error())
+		log.Debugf("bad request: content-type is %s: %s", contentType, err.Error())
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -72,6 +72,7 @@ func (h *RestrictedHandler) AddOrder(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		err = fmt.Errorf("bad request: %w", err)
+		log.Debugf("bad request: content-type is %s: %s", contentType, err.Error())
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}

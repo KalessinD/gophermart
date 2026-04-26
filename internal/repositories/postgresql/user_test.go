@@ -28,31 +28,32 @@ func TestSQLStorage_AddUser(t *testing.T) {
 		user := &models.User{Login: "newuser", Hash: "secret_hash"}
 
 		mock.ExpectBegin()
-		mock.ExpectExec("INSERT").
+		mock.ExpectQuery("INSERT").
 			WithArgs(user.Login, user.Hash).
-			WillReturnResult(sqlmock.NewResult(1, 1))
+			// Мы возвращаем одну строку с колонкой "id" и значением 1
+			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 		mock.ExpectCommit()
 
 		err := storage.AddUser(context.Background(), user)
 		require.NoError(t, err)
+		// Проверяем, что ID записался в структуру пользователя
+		assert.Equal(t, "1", user.ID)
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 
 	t.Run("user already exists (unique violation)", func(t *testing.T) {
 		user := &models.User{Login: "existinguser", Hash: "secret"}
 
-		// Код 23505 - unique_violation
 		pgErr := &pgconn.PgError{Code: pgerrcode.UniqueViolation, Message: "duplicate key value"}
 
 		mock.ExpectBegin()
-		mock.ExpectExec("INSERT").
+		mock.ExpectQuery("INSERT").
 			WithArgs(user.Login, user.Hash).
 			WillReturnError(pgErr)
 		mock.ExpectRollback()
 
 		err := storage.AddUser(context.Background(), user)
 		require.Error(t, err)
-		// Проверяем, что ошибка БД преобразована в доменную ошибку
 		assert.ErrorIs(t, err, models.ErrUserExists)
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
@@ -61,7 +62,7 @@ func TestSQLStorage_AddUser(t *testing.T) {
 		user := &models.User{Login: "dberror", Hash: "secret"}
 
 		mock.ExpectBegin()
-		mock.ExpectExec("INSERT").
+		mock.ExpectQuery("INSERT").
 			WithArgs(user.Login, user.Hash).
 			WillReturnError(errors.New("some internal error"))
 		mock.ExpectRollback()
@@ -78,18 +79,18 @@ func TestSQLStorage_AddUser(t *testing.T) {
 
 		// Два раза возвращаем ошибку
 		mock.ExpectBegin()
-		mock.ExpectExec("INSERT").WithArgs(user.Login, user.Hash).WillReturnError(pgErr)
+		mock.ExpectQuery("INSERT").WithArgs(user.Login, user.Hash).WillReturnError(pgErr)
 		mock.ExpectRollback()
 
 		mock.ExpectBegin()
-		mock.ExpectExec("INSERT").WithArgs(user.Login, user.Hash).WillReturnError(pgErr)
+		mock.ExpectQuery("INSERT").WithArgs(user.Login, user.Hash).WillReturnError(pgErr)
 		mock.ExpectRollback()
 
 		// На третий раз успех
 		mock.ExpectBegin()
-		mock.ExpectExec("INSERT").
+		mock.ExpectQuery("INSERT").
 			WithArgs(user.Login, user.Hash).
-			WillReturnResult(sqlmock.NewResult(1, 1))
+			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 		mock.ExpectCommit()
 
 		err := storage.AddUser(context.Background(), user)

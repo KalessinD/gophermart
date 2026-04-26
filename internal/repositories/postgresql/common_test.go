@@ -57,9 +57,9 @@ func TestSQLStorage_withTxRetry_via_AddUser(t *testing.T) {
 		// Ожидаем начало транзакции
 		mock.ExpectBegin()
 		// Ожидаем Exec внутри транзакции.
-		mock.ExpectExec("INSERT INTO ").
+		mock.ExpectQuery("INSERT INTO ").
 			WithArgs("testuser", sqlmock.AnyArg()). // Логин и любой хеш
-			WillReturnResult(sqlmock.NewResult(1, 1))
+			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 		// Ожидаем коммит
 		mock.ExpectCommit()
 
@@ -89,7 +89,7 @@ func TestSQLStorage_withTxRetry_via_AddUser(t *testing.T) {
 
 		for i := 0; i < postgresql.RetryingAttempts; i++ {
 			mock.ExpectBegin()
-			mock.ExpectExec("INSERT").
+			mock.ExpectQuery("INSERT").
 				WillReturnError(pgErr)
 			mock.ExpectRollback()
 		}

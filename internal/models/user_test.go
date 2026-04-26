@@ -150,7 +150,7 @@ func TestUser_ToJSON(t *testing.T) {
 func TestFromJSON(t *testing.T) {
 	jsonStr := `{"id":"login@domain.ru","login":"jsonuser","password":"jsonpass","version":2}`
 
-	user, err := models.FromJSON([]byte(jsonStr))
+	user, err := models.FromJSON[models.User]([]byte(jsonStr))
 	if err != nil {
 		t.Fatalf("FromJSON() returned error: %v", err)
 	}
@@ -173,7 +173,7 @@ func TestFromJSON(t *testing.T) {
 func TestFromJSON_Invalid(t *testing.T) {
 	invalidJSON := `{"id": "123", "login": ` // Оборванный JSON
 
-	_, err := models.FromJSON([]byte(invalidJSON))
+	_, err := models.FromJSON[models.User]([]byte(invalidJSON))
 	if err == nil {
 		t.Error("FromJSON() should return error for invalid JSON, but got nil")
 	}

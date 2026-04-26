@@ -65,19 +65,19 @@ Content-Type: application/json
 */
 func (h *CommonHandler) Login(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	log := middleware.GetLogger(ctx)
+	log := middleware.GetLogger(ctx).Sugar()
 	user, err := h.commonChecks(w, r)
 	if err != nil {
-		log.Sugar().Debugf("login failed: %s", err.Error())
+		log.Debugf("login failed: %s", err.Error())
 		return
 	}
 
 	if err = h.service.Login(ctx, user); err != nil {
 		status := h.defineResponseStatusByError(err)
 		if status == http.StatusInternalServerError {
-			log.Sugar().Errorf("login failed: %s", err.Error())
+			log.Errorf("login failed: %s", err.Error())
 		} else {
-			log.Sugar().Debugf("login failed: %s", err.Error())
+			log.Debugf("login failed: %s", err.Error())
 		}
 
 		w.WriteHeader(status)
@@ -86,7 +86,7 @@ func (h *CommonHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.setAuthCookie(w, user); err != nil {
-		log.Sugar().Errorf("setting auth cookie failed: %s", err.Error())
+		log.Errorf("setting auth cookie failed: %s", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -117,19 +117,19 @@ Content-Type: application/json
 */
 func (h *CommonHandler) Register(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	log := middleware.GetLogger(ctx)
+	log := middleware.GetLogger(ctx).Sugar()
 	user, err := h.commonChecks(w, r)
 	if err != nil {
-		log.Sugar().Debugf("user registration failed1: %s", err.Error())
+		log.Debugf("user registration failed1: %s", err.Error())
 		return
 	}
 
 	if err = h.service.Register(ctx, user); err != nil {
 		status := h.defineResponseStatusByError(err)
 		if status == http.StatusInternalServerError {
-			log.Sugar().Errorf("user registration failed2: %s", err.Error())
+			log.Errorf("user registration failed2: %s", err.Error())
 		} else {
-			log.Sugar().Debugf("user registration failed3: %s", err.Error())
+			log.Debugf("user registration failed3: %s", err.Error())
 		}
 
 		w.WriteHeader(status)
@@ -138,7 +138,7 @@ func (h *CommonHandler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.setAuthCookie(w, user); err != nil {
-		log.Sugar().Errorf("setting auth cookie failed: %s", err.Error())
+		log.Errorf("setting auth cookie failed: %s", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -161,7 +161,8 @@ func (h *CommonHandler) commonChecks(w http.ResponseWriter, r *http.Request) (us
 		return
 	}
 
-	user, err = model.FromJSON(body)
+	// user, err = model.UserFromJSON(body)
+	user, err = model.FromJSON[model.User](body)
 	if err != nil {
 		err = fmt.Errorf("can't parse request body: %w", err)
 		w.WriteHeader(http.StatusBadRequest)

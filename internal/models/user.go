@@ -52,10 +52,10 @@ func NewUser(login, password, hash string, version int) *User {
 /*
 Валидация длины логина и пароля
 */
-func (u *User) Validate() error {
-	if len(u.Login) < MinLoginLength {
+func (m *User) Validate() error {
+	if len(m.Login) < MinLoginLength {
 		return ErrWrongLoginLength
-	} else if len(u.Password) < MinPasswordLength {
+	} else if len(m.Password) < MinPasswordLength {
 		return ErrWrongPasswordLength
 	}
 	return nil
@@ -65,19 +65,6 @@ func (u *User) Validate() error {
 Сериализует объект пользователя в строку JSON
 Может вернуть ошибку, коли та случится.
 */
-func (u *User) ToJSON() ([]byte, error) {
-	return json.Marshal(u)
-}
-
-/*
-Десериализует строку JSON в объект пользователя.
-Может вернуть ошибку, коли та случится.
-*/
-func FromJSON(str []byte) (*User, error) {
-	user := &User{}
-	err := json.Unmarshal(str, user)
-	if err != nil {
-		return nil, err
-	}
-	return user, nil
+func (m *User) ToJSON() ([]byte, error) {
+	return json.Marshal(m)
 }
