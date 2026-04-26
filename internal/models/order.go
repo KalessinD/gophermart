@@ -22,7 +22,6 @@ type (
 		UserID     string    `json:"user_id"`
 		Status     string    `json:"status"`
 		Accrual    int       `json:"accrual"`
-		Version    int       `json:"version"`
 		UploadedAt time.Time `json:"uploaded,omitempty"`
 		UpdatedAt  time.Time `json:"updated,omitempty"`
 	}

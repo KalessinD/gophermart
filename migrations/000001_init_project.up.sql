@@ -31,9 +31,8 @@ CREATE TABLE IF NOT EXISTS gophermart.orders (
     id varchar(32) NOT NULL,
     user_id UUID NOT NULL,
     status gophermart.order_status NOT NULL,
-    money bigint DEFAULT 0,
-    reward double precision DEFAULT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    accrual bigint DEFAULT 0,
+    uploaded_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
@@ -44,9 +43,8 @@ COMMENT ON TABLE gophermart.orders IS 'Таблица заказов';
 COMMENT ON COLUMN gophermart.orders.id IS 'Уникальный идентификатор заказов';
 COMMENT ON COLUMN gophermart.orders.user_id IS 'ID пользователя';
 COMMENT ON COLUMN gophermart.orders.status IS 'Статус заказа';
-COMMENT ON COLUMN gophermart.orders.money IS 'Сумма заказа в копейках';
-COMMENT ON COLUMN gophermart.orders.reward IS 'Бонусное вознаграждение в копейках';
-COMMENT ON COLUMN gophermart.orders.created_at IS 'Дата создания заказа';
+COMMENT ON COLUMN gophermart.orders.accrual IS 'Начисления в копейках';
+COMMENT ON COLUMN gophermart.orders.uploaded_at IS 'Дата получения заказа';
 COMMENT ON COLUMN gophermart.orders.updated_at IS 'Дата обновления заказа';
 
 CREATE INDEX IF NOT EXISTS status_idx ON gophermart.orders USING btree(status);
