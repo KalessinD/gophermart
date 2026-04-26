@@ -57,7 +57,7 @@ func TestCommonHandler_Register(t *testing.T) {
 		{
 			name: "Invalid JSON body",
 			body: `{invalid json}`,
-			prepare: func(m *mocks.MockUserCommonActions) {
+			prepare: func(_ *mocks.MockUserCommonActions) {
 				// Никаких вызовов сервиса не ожидается
 			},
 			wantStatus: http.StatusBadRequest,
@@ -144,7 +144,7 @@ func TestCommonHandler_Login(t *testing.T) {
 		{
 			name: "Bad content type",
 			body: `{"login": "test", "password": "test"}`,
-			prepare: func(m *mocks.MockUserCommonActions) {
+			prepare: func(_ *mocks.MockUserCommonActions) {
 				// Сервис не должен вызываться
 			},
 			wantStatus: http.StatusBadRequest,
