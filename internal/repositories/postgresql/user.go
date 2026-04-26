@@ -10,39 +10,15 @@ import (
 )
 
 const (
-	PsqlUsersSchema = "gophermart"
-	PsqlUserTable   = "users"
+	PsqlUserTable = `"` + PsqlGophermartSchema + `"."users"`
 
-	QueryInsertUser = `
-		INSERT INTO "` + PsqlUsersSchema + `"."` + PsqlUserTable + `" AS t (login, hash)
-        VALUES($1, $2)
-		`
+	QueryInsertUser = `INSERT INTO ` + PsqlUserTable + ` AS t (login, hash) VALUES($1, $2)`
 
-	QuerySelectUser = `SELECT id, login, hash, version, created_at FROM "` + PsqlUsersSchema + `"."` + PsqlUserTable + `" WHERE login = $1`
+	QuerySelectUser = `SELECT id, login, hash, version, created_at FROM ` + PsqlUserTable + ` WHERE login = $1`
 )
-
-type (
-	SQLStorage struct {
-		db *sql.DB
-	}
-
-	SQLStorageInterface interface {
-		GetUser(ctx context.Context, login string) (*model.User, error)
-		AddUser(ctx context.Context, user *model.User) error
-		Ping(ctx context.Context) error
-	}
-)
-
-func NewSQLStorage(psql *sql.DB) SQLStorageInterface {
-	return &SQLStorage{db: psql}
-}
-
-func (r *SQLStorage) Ping(ctx context.Context) error {
-	return r.db.PingContext(ctx)
-}
 
 func (r *SQLStorage) GetUser(ctx context.Context, login string) (*model.User, error) {
-	row, err := withRetry(ctx, func(ctx context.Context) (*sql.Row, error) {
+	row, err := r.withRetry(ctx, func(ctx context.Context) (*sql.Row, error) {
 		row := r.db.QueryRowContext(ctx, QuerySelectUser, login)
 		if row.Err() != nil {
 			return nil, row.Err()
@@ -63,7 +39,7 @@ func (r *SQLStorage) GetUser(ctx context.Context, login string) (*model.User, er
 }
 
 func (r *SQLStorage) AddUser(ctx context.Context, user *model.User) error {
-	return withTxRetry(ctx, r.db, func(tx *sql.Tx) error {
+	return r.withTxRetry(ctx, func(tx *sql.Tx) error {
 		if err := r.addUserTx(ctx, tx, user); err != nil {
 			return err
 		}
