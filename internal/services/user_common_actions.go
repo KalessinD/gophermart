@@ -1,3 +1,4 @@
+//go:generate mockgen -source=user_common_actions.go -destination=mocks/mock_user_common_actions.go -package=mocks
 package services
 
 import (
