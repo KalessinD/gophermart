@@ -21,7 +21,7 @@ const (
 
 	QueryInsertUser = `
 		INSERT INTO "` + PsqlUsersSchema + `"."` + PsqlUserTable + `" AS t (login, hash)
-        VALUES($1, $2, $3)
+        VALUES($1, $2)
 		`
 
 	QuerySelectUser = `SELECT id, login, hash, version, created_at FROM "` + PsqlUsersSchema + `"."` + PsqlUserTable + `" WHERE login = $1`

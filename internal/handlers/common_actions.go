@@ -77,23 +77,11 @@ func (h *CommonHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	expireAt := time.Now().Add(TokenExpiration)
-	tokenString, err := h.service.GenerateToken(user, h.encryptionkey, expireAt)
-	if err != nil {
-		log.Sugar().Debugf("token generation failed: %s", err)
+	if err := h.setAuthCookie(w, user); err != nil {
+		log.Sugar().Debugf("setting auth cookie failed: %s", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	http.SetCookie(w, &http.Cookie{
-		Name:     CookieTokenName,
-		Value:    tokenString,
-		Expires:  expireAt,
-		Secure:   false,                // false только ради разработки
-		HttpOnly: true,                 // Защита от XSS (JS не может прочитать куку)
-		Path:     ParentPath,           // Доступна в /api/user
-		SameSite: http.SameSiteLaxMode, // Защита от CSRF
-	})
 
 	w.WriteHeader(http.StatusOK)
 }
@@ -131,6 +119,12 @@ func (h *CommonHandler) Register(w http.ResponseWriter, r *http.Request) {
 	if err = h.service.Register(ctx, user); err != nil {
 		log.Sugar().Debugf("user registration failed: %s", err)
 		h.setResponseStatusByError(w, err)
+		return
+	}
+
+	if err := h.setAuthCookie(w, user); err != nil {
+		log.Sugar().Debugf("setting auth cookie failed: %s", err)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -181,4 +175,24 @@ func (h *CommonHandler) setResponseStatusByError(w http.ResponseWriter, err erro
 	default:
 		w.WriteHeader(http.StatusInternalServerError)
 	}
+}
+
+func (h *CommonHandler) setAuthCookie(w http.ResponseWriter, user *model.User) error {
+	expireAt := time.Now().Add(TokenExpiration)
+	tokenString, err := h.service.GenerateToken(user, h.encryptionkey, expireAt)
+	if err != nil {
+		return fmt.Errorf("token generation failed: %w", err)
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     CookieTokenName,
+		Value:    tokenString,
+		Expires:  expireAt,
+		Secure:   false,                // false только ради разработки
+		HttpOnly: true,                 // Защита от XSS (JS не может прочитать куку)
+		Path:     ParentPath,           // Доступна в /api/user
+		SameSite: http.SameSiteLaxMode, // Защита от CSRF
+	})
+
+	return nil
 }

@@ -112,5 +112,5 @@ func (s *CommonAction) GenerateToken(user *models.User, key string, expireAt tim
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(key)
+	return token.SignedString([]byte(key))
 }

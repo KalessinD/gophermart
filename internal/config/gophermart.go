@@ -1,10 +1,8 @@
 package config
 
 import (
-	"encoding/hex"
 	"errors"
 	"flag"
-	"fmt"
 	"time"
 )
 
@@ -65,9 +63,6 @@ func (c *GophermartConfig) Validate() error {
 	}
 	if c.EncryptionKey == "" {
 		return errors.New("encryption key can't be an ampty string")
-	}
-	if _, err := hex.DecodeString(c.EncryptionKey); err != nil {
-		return fmt.Errorf("can't decode encryption key (hex format was expected): %w", err)
 	}
 	return nil
 }

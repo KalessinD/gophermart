@@ -30,7 +30,7 @@ type (
 		Password  string    `json:"password"`
 		Hash      string    `json:"-"`
 		Version   int       `json:"version"`
-		CreatedAt time.Time `json:"hash,omitempty"`
+		CreatedAt time.Time `json:"created,omitempty"`
 	}
 
 	/*

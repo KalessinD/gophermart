@@ -80,9 +80,7 @@ print_title = $(ECHO) "\033[1;33m$1\033[0m"
 
 .ONESHELL:
 
-all: stop clean build lint test  # Builds gophermart and accrual binaries, runs tests
-
-build: build-accrual build-gophermart build-docker # Builds gophermart and accrual binaries
+all: stop clean build lint test-go  # Builds gophermart and accrual binaries, runs tests
 
 help: # Shows help message
 	$(NOECHO) $(GREP) -E '^[a-zA-Z0-9 -]+:.*#'  Makefile | \
@@ -97,6 +95,8 @@ clone-yp-autotest: # Clones Yandex.Practicum auto-test from git repository
 		$(ECHO) "Cloning tests"; \
 		$(GIT) clone $(YP_AUTOTESTS_GIT_URL) $(YP_AUTOTESTS_PATH); \
 	fi
+
+build: build-accrual build-gophermart build-docker # Builds gophermart and accrual binaries
 
 build-docker: # Builds docker compose
 	$(NOECHO) $(DOCKER_COMPOSE) -f docker-compose.yml build
@@ -145,7 +145,7 @@ test-go: # Runs golang tests
 	$(NOECHO) $(GO) clean -testcache
 	$(NOECHO) $(GO) test -buildvcs=false -v -race -cover ./...
 
-test-yp: stop-docker start-docker check-binaries
+test-yp: check-binaries stop start
 	$(NOECHO) $(call print_title,"Running Yandex.Practicum tests")
 	$(NOECHO) $(YP_GOPHERMART_TEST) -test.v \
 		-accrual-binary-path $(ACCRUAL_BIN) \
@@ -157,7 +157,7 @@ test-yp: stop-docker start-docker check-binaries
 		-accrual-host $(ACCRUAL_HOST) \
 		-accrual-port $(ACCRUAL_PORT)
 
-test-yp-custom: clone-yp-autotest # Runs Yandex.Practicum test cases
+test-yp-custom: clone-yp-autotest check-binaries stop start # Runs Yandex.Practicum test cases
 	$(NOECHO) $(call print_title,"Running Yandex.Practicum tests for custom iteration")
 	$(NOECHO) if [ -z "${YP_CUSTOM_TEST}" ]; then \
 		$(ECHO) "Please set YP_CUSTOM_TEST variable to the name of the test you want to run (e.g. 'TestIteration8/TestGetGzipHandlers/get_info_page')"; \
