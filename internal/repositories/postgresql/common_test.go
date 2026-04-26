@@ -44,8 +44,8 @@ func TestSQLStorage_Ping(t *testing.T) {
 	})
 }
 
-// тест для AddUser
-func TestSQLStorage_AddUser(t *testing.T) {
+// тестируем приватный метод withTxRetry через AddUser
+func TestSQLStorage_withTxRetry_via_AddUser(t *testing.T) {
 	t.Run("successful add user", func(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
@@ -53,14 +53,13 @@ func TestSQLStorage_AddUser(t *testing.T) {
 
 		storage := postgresql.NewSQLStorage(db)
 
-		// 1. Ожидаем начало транзакции
+		// Ожидаем начало транзакции
 		mock.ExpectBegin()
-		// 2. Ожидаем Exec внутри транзакции.
-		// ВАЖНО: Если ваш запрос в user.go отличается, исправьте регулярное выражение.
+		// Ожидаем Exec внутри транзакции.
 		mock.ExpectExec("INSERT INTO ").
 			WithArgs("testuser", sqlmock.AnyArg()). // Логин и любой хеш
 			WillReturnResult(sqlmock.NewResult(1, 1))
-		// 3. Ожидаем коммит
+		// Ожидаем коммит
 		mock.ExpectCommit()
 
 		user := &models.User{
@@ -70,9 +69,6 @@ func TestSQLStorage_AddUser(t *testing.T) {
 
 		err = storage.AddUser(context.Background(), user)
 
-		// Если здесь паника с nil pointer, проверьте файл user.go
-		// Вы должны вызывать: r.addUserTx(ctx, user, tx)
-		// А не: r.addUserTx(ctx, user, nil)
 		require.NoError(t, err)
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
