@@ -3,7 +3,9 @@ package gophermart
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"net/http"
+	"time"
 
 	handler "github.com/KalessinD/gophermart/internal/handlers"
 	repository "github.com/KalessinD/gophermart/internal/repositories/postgresql"
@@ -16,17 +18,50 @@ import (
 	"go.uber.org/zap"
 )
 
+var (
+	maxConnectionRetries           = 3
+	waitIntervalBetweenConnections = time.Second * 3
+)
+
 func PsqlConnect(ctx context.Context, dsn string, log *zap.Logger) (*sql.DB, error) {
 	db, err := sql.Open("pgx", dsn)
 	if err != nil {
-		log.Error("Can't connect to psql server", zap.Error(err))
-		return nil, err
+		log.Error("Failed to parse DSN", zap.Error(err))
+		return nil, fmt.Errorf("parsing DSN: %w", err)
 	}
 
-	err = db.Ping()
-	if err != nil {
-		log.Error("Can't ping the psql server", zap.Error(err))
-		return nil, err
+	var lastErr error
+
+	for attempt := range maxConnectionRetries {
+		lastErr = db.PingContext(ctx)
+		if lastErr == nil {
+			log.Info("Successfully connected to PostgreSQL", zap.Int("attempt", attempt))
+			break
+		}
+
+		log.Warn("Failed to connect to PostgreSQL, retrying...",
+			zap.Int("attempt", attempt),
+			zap.Int("max_retries", maxConnectionRetries),
+			zap.Duration("interval", waitIntervalBetweenConnections),
+			zap.Error(lastErr),
+		)
+
+		if attempt < maxConnectionRetries {
+			select {
+			case <-ctx.Done():
+				log.Warn("Database connection canceled by context during retry")
+				db.Close()
+				return nil, ctx.Err()
+			case <-time.After(waitIntervalBetweenConnections):
+				// Время вышло, идем на следующий круг
+			}
+		}
+	}
+
+	if lastErr != nil {
+		log.Error("Failed to connect to PostgreSQL after all retries", zap.Error(lastErr))
+		db.Close()
+		return nil, fmt.Errorf("db connection failed after %d retries: %w", maxConnectionRetries, lastErr)
 	}
 
 	go func() {
@@ -34,8 +69,6 @@ func PsqlConnect(ctx context.Context, dsn string, log *zap.Logger) (*sql.DB, err
 		log.Info("Closing database connection due to context cancellation")
 		db.Close()
 	}()
-
-	log.Info("Successfully connected to the PostgreSQL database")
 
 	return db, nil
 }

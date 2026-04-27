@@ -50,15 +50,24 @@ func (r *SQLStorage) Ping(ctx context.Context) error {
 }
 
 func (r *SQLStorage) withRetry(ctx context.Context, action wrapperFunc) (*sql.Row, error) {
-	var err error
+	var lastErr error
 
-	for attempts := 0; attempts < RetryingAttempts; attempts++ {
+	for attempts := range RetryingAttempts {
 		obj, err := action(ctx)
+		lastErr = err
+
+		if err == nil {
+			return obj, nil
+		}
 
 		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
-			if pgerrors.ClassifyPgError(pgErr) == pgerrors.Retriable {
-				time.Sleep(time.Millisecond * 100)
+		if errors.As(err, &pgErr) && pgerrors.ClassifyPgError(pgErr) == pgerrors.Retriable {
+			delay := RetryingDelay + time.Duration(attempts)*RetryingDelayStep
+
+			select {
+			case <-ctx.Done():
+				return nil, ctx.Err()
+			case <-time.After(delay):
 				continue
 			}
 		}
@@ -66,15 +75,14 @@ func (r *SQLStorage) withRetry(ctx context.Context, action wrapperFunc) (*sql.Ro
 		return obj, err
 	}
 
-	return nil, err
+	return nil, lastErr
 }
 
 func (r *SQLStorage) withTxRetry(ctx context.Context, action txWrapperFunc) error {
-	var tx *sql.Tx
-	var err error
+	var lastErr error
 
-	for attempts := 0; attempts < RetryingAttempts; attempts++ {
-		tx, err = r.db.BeginTx(ctx, nil)
+	for attempts := range RetryingAttempts {
+		tx, err := r.db.BeginTx(ctx, nil)
 		if err != nil {
 			return err
 		}
@@ -85,11 +93,16 @@ func (r *SQLStorage) withTxRetry(ctx context.Context, action txWrapperFunc) erro
 		}
 
 		_ = tx.Rollback()
+		lastErr = err
 
 		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
-			if pgerrors.ClassifyPgError(pgErr) == pgerrors.Retriable {
-				time.Sleep(time.Millisecond * 100)
+		if errors.As(err, &pgErr) && pgerrors.ClassifyPgError(pgErr) == pgerrors.Retriable {
+			delay := RetryingDelay + time.Duration(attempts)*RetryingDelayStep
+
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case <-time.After(delay):
 				continue
 			}
 		}
@@ -97,5 +110,5 @@ func (r *SQLStorage) withTxRetry(ctx context.Context, action txWrapperFunc) erro
 		return err
 	}
 
-	return err
+	return lastErr
 }
