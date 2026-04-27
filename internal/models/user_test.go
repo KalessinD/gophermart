@@ -18,9 +18,6 @@ func TestNewUser(t *testing.T) {
 
 	user := models.NewUser(login, password, hash, version)
 
-	if user == nil {
-		t.Fatal("NewUser returned nil")
-	}
 	if user.Login != login {
 		t.Errorf("expected login %s, got %s", login, user.Login)
 	}

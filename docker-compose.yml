@@ -4,7 +4,7 @@ services:
       context: ./db
       dockerfile: Dockerfile
     ports:
-      - "5432:5432"
+      - "6432:5432"
     environment:
       POSTGRES_USER: gophermart
       POSTGRES_PASSWORD: secret

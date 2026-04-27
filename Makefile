@@ -163,9 +163,9 @@ test-yp-custom: clone-yp-autotest check-binaries stop start # Runs Yandex.Practi
 		$(ECHO) "Please set YP_CUSTOM_TEST variable to the name of the test you want to run (e.g. 'TestIteration8/TestGetGzipHandlers/get_info_page')"; \
 		exit 1; \
 	fi
-	$(NOECHO) $(CD) $(YP_AUTOTESTS_PATH)
-	$(NOECHO) $(GO) clean -testcache
-	$(NOECHO) $(GO) test -v -run ${YP_CUSTOM_TEST} \
+	$(NOECHO) $(CD) $(YP_AUTOTESTS_PATH); \
+		$(GO) clean -testcache; \
+		$(GO) test -v -run ${YP_CUSTOM_TEST} \
 		./cmd/gophermarttest/ \
 		-accrual-binary-path $(ACCRUAL_BIN) \
 		-gophermart-binary-path $(GOPHERMART_BIN) \

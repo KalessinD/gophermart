@@ -70,7 +70,7 @@ func TestGophermartConfig_UpdateFromEnvironment(t *testing.T) {
 	cfg := config.GetDefaultGophermartConfig()
 
 	t.Setenv("RUN_ADDRESS", ":9999")
-	t.Setenv("DATABASE_URI", "postgres://user:pass@localhost:5432/db")
+	t.Setenv("DATABASE_URI", "postgres://user:pass@localhost:6432/db")
 	t.Setenv("ACCRUAL_SYSTEM_ADDRESS", "http://accrual:8080")
 	t.Setenv("GOPHERMART_ENCRYPTION_KEY", "new-key")
 
@@ -78,7 +78,7 @@ func TestGophermartConfig_UpdateFromEnvironment(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, ":9999", cfg.ListenAddr)
-	assert.Equal(t, "postgres://user:pass@localhost:5432/db", cfg.PsqlDSN)
+	assert.Equal(t, "postgres://user:pass@localhost:6432/db", cfg.PsqlDSN)
 	assert.Equal(t, "http://accrual:8080", cfg.AccrualAddress)
 	assert.Equal(t, "new-key", cfg.EncryptionKey)
 }
