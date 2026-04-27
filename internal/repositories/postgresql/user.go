@@ -19,23 +19,18 @@ const (
 )
 
 func (r *SQLStorage) GetUser(ctx context.Context, login string) (*model.User, error) {
-	row, err := r.withRetry(ctx, func(ctx context.Context) (*sql.Row, error) {
+	user := &model.User{}
+
+	_, err := r.withRetry(ctx, func(ctx context.Context) (*sql.Row, error) {
 		row := r.db.QueryRowContext(ctx, QuerySelectUser, login)
-		if row.Err() != nil {
-			return nil, row.Err()
+		if err := row.Scan(&user.ID, &user.Login, &user.Hash, &user.Version, &user.CreatedAt); err != nil {
+			return nil, err
 		}
 		return row, nil
 	})
 	if err != nil {
 		return nil, err
 	}
-
-	user := &model.User{}
-	err = row.Scan(&user.ID, &user.Login, &user.Hash, &user.Version, &user.CreatedAt)
-	if err != nil {
-		return nil, err
-	}
-
 	return user, nil
 }
 
