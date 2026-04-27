@@ -21,8 +21,8 @@ const (
 
 type (
 	CommonHandler struct {
-		service       service.CommonActionsInterface
-		encryptionkey string
+		commonService service.CommonActionsInterface
+		authService   service.AuthInterface
 	}
 
 	CommonHandlerInterface interface {
@@ -34,10 +34,10 @@ type (
 /*
 Конструктор для хендлеров работающих без автоиизации
 */
-func NewCommonHandler(commonService service.CommonActionsInterface, encKey string) CommonHandlerInterface {
+func NewCommonHandler(commonService service.CommonActionsInterface, authService service.AuthInterface) CommonHandlerInterface {
 	return &CommonHandler{
-		service:       commonService,
-		encryptionkey: encKey,
+		commonService: commonService,
+		authService:   authService,
 	}
 }
 
@@ -72,7 +72,7 @@ func (h *CommonHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = h.service.Login(ctx, user); err != nil {
+	if err = h.commonService.Login(ctx, user); err != nil {
 		status := h.defineResponseStatusByError(err)
 		if status == http.StatusInternalServerError {
 			log.Errorf("login failed: %s", err.Error())
@@ -124,7 +124,7 @@ func (h *CommonHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = h.service.Register(ctx, user); err != nil {
+	if err = h.commonService.Register(ctx, user); err != nil {
 		status := h.defineResponseStatusByError(err)
 		if status == http.StatusInternalServerError {
 			log.Errorf("user registration failed2: %s", err.Error())
@@ -192,7 +192,7 @@ func (h *CommonHandler) defineResponseStatusByError(err error) (status int) {
 
 func (h *CommonHandler) setAuthCookie(w http.ResponseWriter, user *model.User) error {
 	expireAt := time.Now().Add(TokenExpiration)
-	tokenString, err := h.service.GenerateToken(user, h.encryptionkey, expireAt)
+	tokenString, err := h.authService.GenerateToken(user, expireAt)
 	if err != nil {
 		return fmt.Errorf("token generation failed: %w", err)
 	}

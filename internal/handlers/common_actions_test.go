@@ -10,6 +10,7 @@ import (
 	"github.com/KalessinD/gophermart/internal/handlers"
 	"github.com/KalessinD/gophermart/internal/middleware"
 	"github.com/KalessinD/gophermart/internal/models"
+	"github.com/KalessinD/gophermart/internal/services"
 	"github.com/KalessinD/gophermart/internal/services/mocks"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
@@ -30,10 +31,7 @@ func TestCommonHandler_Register(t *testing.T) {
 			name: "Successful registration",
 			body: `{"login": "testuser", "password": "password123"}`,
 			prepare: func(m *mocks.MockUserCommonActions) {
-				// Ожидаем вызов Register с любым контекстом и пользователем
 				m.EXPECT().Register(gomock.Any(), gomock.Any()).Return(nil)
-				// Ожидаем генерацию токена
-				m.EXPECT().GenerateToken(gomock.Any(), testSecret, gomock.Any()).Return("valid-token", nil)
 			},
 			wantStatus: http.StatusOK,
 		},
@@ -42,7 +40,6 @@ func TestCommonHandler_Register(t *testing.T) {
 			body: `{"login": "testuser", "password": "password123"}`,
 			prepare: func(m *mocks.MockUserCommonActions) {
 				m.EXPECT().Register(gomock.Any(), gomock.Any()).Return(models.ErrUserExists)
-				// GenerateToken не должен вызываться
 			},
 			wantStatus: http.StatusConflict,
 		},
@@ -55,11 +52,9 @@ func TestCommonHandler_Register(t *testing.T) {
 			wantStatus: http.StatusInternalServerError,
 		},
 		{
-			name: "Invalid JSON body",
-			body: `{invalid json}`,
-			prepare: func(_ *mocks.MockUserCommonActions) {
-				// Никаких вызовов сервиса не ожидается
-			},
+			name:       "Invalid JSON body",
+			body:       `{invalid json}`,
+			prepare:    func(_ *mocks.MockUserCommonActions) {},
 			wantStatus: http.StatusBadRequest,
 		},
 	}
@@ -69,14 +64,14 @@ func TestCommonHandler_Register(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
+			authService := services.NewAuthService(testSecret)
 			mockService := mocks.NewMockUserCommonActions(ctrl)
 			if tt.prepare != nil {
 				tt.prepare(mockService)
 			}
 
-			h := handlers.NewCommonHandler(mockService, testSecret)
+			h := handlers.NewCommonHandler(mockService, authService)
 			req := httptest.NewRequest(http.MethodPost, "/api/user/register", bytes.NewBufferString(tt.body))
-
 			req.Header.Set("Content-Type", "application/json")
 
 			ctx := middleware.AddLoggerToContext(req.Context(), logger)
@@ -89,12 +84,13 @@ func TestCommonHandler_Register(t *testing.T) {
 				t.Errorf("expected status %d, got %d. Body: %s", tt.wantStatus, rec.Code, rec.Body.String())
 			}
 
-			// проверяем куку при успехе
+			// Проверяем куку при успехе
 			if tt.wantStatus == http.StatusOK {
 				cookies := rec.Result().Cookies()
 				found := false
 				for _, c := range cookies {
-					if c.Name == "token" && c.Value == "valid-token" {
+					// Убрали строгую проверку на "valid-token", проверяем просто наличие значения
+					if c.Name == "token" && c.Value != "" {
 						found = true
 						break
 					}
@@ -121,7 +117,6 @@ func TestCommonHandler_Login(t *testing.T) {
 			body: `{"login": "testuser", "password": "password123"}`,
 			prepare: func(m *mocks.MockUserCommonActions) {
 				m.EXPECT().Login(gomock.Any(), gomock.Any()).Return(nil)
-				m.EXPECT().GenerateToken(gomock.Any(), testSecret, gomock.Any()).Return("valid-token", nil)
 			},
 			wantStatus: http.StatusOK,
 		},
@@ -142,11 +137,9 @@ func TestCommonHandler_Login(t *testing.T) {
 			wantStatus: http.StatusUnauthorized,
 		},
 		{
-			name: "Bad content type",
-			body: `{"login": "test", "password": "test"}`,
-			prepare: func(_ *mocks.MockUserCommonActions) {
-				// Сервис не должен вызываться
-			},
+			name:       "Bad content type",
+			body:       `{"login": "test", "password": "test"}`,
+			prepare:    func(_ *mocks.MockUserCommonActions) {},
 			wantStatus: http.StatusBadRequest,
 		},
 	}
@@ -156,16 +149,16 @@ func TestCommonHandler_Login(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
+			authService := services.NewAuthService(testSecret)
 			mockService := mocks.NewMockUserCommonActions(ctrl)
 			if tt.prepare != nil {
 				tt.prepare(mockService)
 			}
 
-			h := handlers.NewCommonHandler(mockService, testSecret)
+			h := handlers.NewCommonHandler(mockService, authService)
 
 			req := httptest.NewRequest(http.MethodPost, "/api/user/login", bytes.NewBufferString(tt.body))
 
-			// Специально ломаем Content-Type для соответствующего теста
 			if tt.name != "Bad content type" {
 				req.Header.Set("Content-Type", "application/json")
 			} else {

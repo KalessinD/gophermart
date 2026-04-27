@@ -58,7 +58,7 @@ func NewRouter(cfg *config.GophermartConfig, log *zap.Logger, pgdb *sql.DB) (htt
 		service.NewCommonAction(
 			repository.NewSQLStorage(pgdb),
 		),
-		cfg.EncryptionKey,
+		service.NewAuthService(cfg.EncryptionKey),
 	)
 
 	// свободный доступ

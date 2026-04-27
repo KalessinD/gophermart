@@ -3,12 +3,9 @@ package services
 
 import (
 	"context"
-	"time"
 
-	"github.com/KalessinD/gophermart/internal/common"
 	"github.com/KalessinD/gophermart/internal/models"
 	repository "github.com/KalessinD/gophermart/internal/repositories/postgresql"
-	"github.com/golang-jwt/jwt/v5"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -27,7 +24,6 @@ type (
 	CommonActionsInterface interface {
 		Login(ctx context.Context, user *models.User) error
 		Register(ctx context.Context, user *models.User) error
-		GenerateToken(user *models.User, key string, expireAt time.Time) (string, error)
 	}
 )
 
@@ -96,21 +92,4 @@ func (s *CommonActions) hashPassword(password string) (string, error) {
 	// Чем выше число, тем медленнее считается хеш, тем сложнее подобрать пароль.
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	return string(bytes), err
-}
-
-/*
-Генерирует JWT строку
-*/
-func (s *CommonActions) GenerateToken(user *models.User, key string, expireAt time.Time) (string, error) {
-	claims := &common.Claims{
-		UserID: user.ID,
-		Login:  user.Login,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(expireAt),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-		},
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(key))
 }
