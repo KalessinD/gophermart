@@ -22,11 +22,10 @@ services:
     depends_on:
       - db
     ports:
-      - "7081:7081"
+      - "${ACCRUAL_PORT:-7081}:${ACCRUAL_PORT:-7081}"
     environment:
-      DATABASE_URI: postgres://gophermart:secret@db:6432/yp?sslmode=disable
-      RUN_ADDRESS: localhost:7081
-      # RUN_ADDRESS: ${ACCRUAL_RUN_ADDRESS:-localhost:7081}
+      DATABASE_URI: postgres://gophermart:secret@db:5432/yp?sslmode=disable
+      RUN_ADDRESS: 0.0.0.0:${ACCRUAL_PORT:-7081}
     networks:
       - internal
 
