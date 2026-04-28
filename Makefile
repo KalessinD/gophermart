@@ -205,10 +205,8 @@ start-accrual: # Starts the accrual
 		exit 1; \
 	fi
 	$(NOECHO) $(ACCRUAL_BIN) \
-		-a localhost:$(YP_GOPHERMART_PORT) \
-		-p $(YP_POLL_INTERVAL) \
-		-r $(YP_REPORT_INTERVAL) \
-		-k $(YP_KEY) \
+		-d $(YP_PSQL_DSN) \
+		-a $(ACCRUAL_HOST):$(ACCRUAL_PORT) \
 		> $(ACCRUAL_LOG_FILE) 2>&1 & $(ECHO) $$! > $(ACCRUAL_PID_FILE)
 
 start-gophermart: # Starts the gophermart
