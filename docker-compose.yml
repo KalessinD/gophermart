@@ -1,7 +1,7 @@
 services:
   db:
     build:
-      context: ./db
+      context: ./docker/db
       dockerfile: Dockerfile
     ports:
       - "6432:5432"
@@ -12,5 +12,23 @@ services:
     volumes:
       - postgres_data:/tmp/postgresql_gophermart_data
 
+  accrual:
+    container_name: go-accrual
+    build:
+      context: ./docker/accrual
+      additional_contexts:
+        bin: ./cmd/accrual
+      dockerfile: Dockerfile
+    depends_on:
+      - db
+    environment:
+      DATABASE_URI: postgres://gophermart:secret@localhost:6432/yp?sslmode=disable
+    networks:
+      - internal
+
 volumes:
   postgres_data:
+
+networks:
+  internal:
+    driver: bridge
