@@ -19,16 +19,12 @@ func IsDevelopment() bool {
 	return !IsProduction()
 }
 
-// Returns the value of os.GetEnv if exists, otherwise the value from .env
+// Returns the value of os.GetEnv if exists
 func GetEnv(key string) string {
-	var value string
-	if value := os.Getenv(key); value != "" {
-		return value
-	}
-	return value
+	return os.Getenv(key)
 }
 
-// Returns OS Environment; ignores .env file due to tests
+// Returns OS Environment
 func GetEnvOrFallback[T any](key string, fallback T) T {
 	valStr := os.Getenv(key)
 	if valStr == "" {

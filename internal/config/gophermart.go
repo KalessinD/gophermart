@@ -62,7 +62,7 @@ func (c *GophermartConfig) Validate() error {
 		return err
 	}
 	if c.EncryptionKey == "" {
-		return errors.New("encryption key can't be an ampty string")
+		return errors.New("encryption key can't be an empty string")
 	}
 	return nil
 }

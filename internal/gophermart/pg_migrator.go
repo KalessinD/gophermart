@@ -20,7 +20,13 @@ func NewPgMigrator(psql *sql.DB) MigratorInterface {
 	return &PgMigrator{pg: psql}
 }
 
-func (m *PgMigrator) Apply(ctx context.Context, _ string, files []string) error {
+func (m *PgMigrator) Apply(ctx context.Context, dir string, files []string) error {
+	root, err := os.OpenRoot(dir)
+	if err != nil {
+		return err
+	}
+	defer root.Close()
+
 	for _, file := range files {
 		content, err := os.ReadFile(file)
 		if err != nil {

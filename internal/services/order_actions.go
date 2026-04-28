@@ -1,4 +1,4 @@
-//go:generate mockgen -source=user_common_actions.go -destination=mocks/mock_user_common_actions.go -package=mocks
+//go:generate mockgen -source=order_service.go -destination=mocks/mock_order_service.go -package=mocks
 package services
 
 import (
@@ -35,12 +35,11 @@ func NewOrderActions(db repository.SQLStorageInterface) OrderActionsInterface {
 }
 
 /*
-Выполняет вход в систему.
-Может вернуть ошибку, если таковая произошла
+Сохраняет закза в БД и отправляет его на обработку в Accrual
 */
 func (s *OrderActions) Store(ctx context.Context, idStr string) error {
 	claims := middleware.GetClaims(ctx)
-	order, err := models.NewOrder(idStr, claims.ID, models.OrderNewStatus)
+	order, err := models.NewOrder(idStr, claims.UserID, models.OrderNewStatus)
 	if err != nil {
 		return err
 	}
@@ -53,3 +52,21 @@ func (s *OrderActions) Store(ctx context.Context, idStr string) error {
 
 	return nil
 }
+
+/*
+func (s *OrderActions) Add2Queue(order *models.Order) error {
+	return nil
+}
+
+func (s *OrderActions) GetFromQueue() *models.Order {
+	return nil
+}
+
+func (s *OrderActions) RestoreQueue(ctx context.Context) error {
+	// get orders from DB where status in (new, processing)
+	return nil
+}
+
+func (s *OrderActions) StartAccrualWorkerPool(ctx context.Context, n int) {
+}
+*/

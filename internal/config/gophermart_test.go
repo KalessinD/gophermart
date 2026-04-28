@@ -37,7 +37,7 @@ func TestGophermartConfig_Validate(t *testing.T) {
 				c.EncryptionKey = ""
 			},
 			wantErr: true,
-			errMsg:  "encryption key can't be an ampty string",
+			errMsg:  "encryption key can't be an empty string",
 		},
 		{
 			name: "invalid listen address",

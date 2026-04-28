@@ -120,16 +120,16 @@ func (h *CommonHandler) Register(w http.ResponseWriter, r *http.Request) {
 	log := middleware.GetLogger(ctx).Sugar()
 	user, err := h.commonChecks(w, r)
 	if err != nil {
-		log.Debugf("user registration failed1: %s", err.Error())
+		log.Debugf("user registration failed: %s", err.Error())
 		return
 	}
 
 	if err = h.commonService.Register(ctx, user); err != nil {
 		status := h.defineResponseStatusByError(err)
 		if status == http.StatusInternalServerError {
-			log.Errorf("user registration failed2: %s", err.Error())
+			log.Errorf("user registration failed: %s", err.Error())
 		} else {
-			log.Debugf("user registration failed3: %s", err.Error())
+			log.Debugf("user registration failed: %s", err.Error())
 		}
 
 		w.WriteHeader(status)

@@ -21,6 +21,10 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
+const (
+	MigrationsDir = "./migrations/"
+)
+
 func main() {
 	if err := run(); err != nil {
 		if !errors.Is(err, http.ErrServerClosed) {
@@ -82,7 +86,7 @@ func databaseWorks(ctx context.Context, cfg *config.GophermartConfig, log *zap.L
 	migrations := []string{"migrations/000001_init_project.up.sql"}
 	migrator := gm.NewPgMigrator(pgdb)
 
-	err = migrator.Apply(ctx, cfg.PsqlDSN, migrations)
+	err = migrator.Apply(ctx, MigrationsDir, migrations)
 	if err != nil {
 		log.Error("Can't apply migration", zap.Error(err))
 		return nil, err
