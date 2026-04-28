@@ -28,7 +28,7 @@ END
 $$;
 
 CREATE TABLE IF NOT EXISTS gophermart.orders (
-    id varchar(32) NOT NULL,
+    id VARCHAR(256) NOT NULL,
     user_id UUID NOT NULL,
     status gophermart.order_status NOT NULL DEFAULT 'NEW',
     accrual bigint DEFAULT 0,
