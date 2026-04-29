@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -138,12 +139,32 @@ Content-Length: 0
 */
 func (h *OrdersdHandler) ListOrders(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	log := middleware.GetLogger(ctx)
+	log := middleware.GetLogger(ctx).Sugar()
 
-	_ = log
+	orders, err := h.orderService.List(ctx)
+	if err != nil {
+		status := h.defineResponseStatusByError(err)
+		if status == http.StatusInternalServerError {
+			log.Errorf("failed to get list of orders: %s", err.Error())
+		} else {
+			log.Debugf("failed to get list of orders: %s", err.Error())
+		}
+
+		w.WriteHeader(status)
+
+		return
+	}
+
+	body, err := json.Marshal(orders)
+	if err != nil {
+		log.Errorf("failed to searilize orders: %s", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 	w.Header().Set("Content-Type", common.AppJSONContentType)
 	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(body)
 }
 
 func (h *OrdersdHandler) defineResponseStatusByError(err error) (status int) {

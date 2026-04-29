@@ -24,6 +24,7 @@ type (
 	*/
 	OrderActionsInterface interface {
 		Store(ctx context.Context, orderID string) error
+		List(ctx context.Context) (models.OrdersList, error)
 	}
 )
 
@@ -64,6 +65,12 @@ func (s *OrderActions) Store(ctx context.Context, idStr string) error {
 	}
 
 	return nil
+}
+
+func (s *OrderActions) List(ctx context.Context) (models.OrdersList, error) {
+	claims := middleware.GetClaims(ctx)
+	orders := s.db.ListOrders(ctx, claims.UserID)
+	return orders, nil
 }
 
 /*
