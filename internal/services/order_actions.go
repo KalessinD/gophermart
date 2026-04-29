@@ -3,6 +3,7 @@ package services
 
 import (
 	"context"
+	"errors"
 
 	"github.com/KalessinD/gophermart/internal/middleware"
 	"github.com/KalessinD/gophermart/internal/models"
@@ -53,8 +54,17 @@ func (s *OrderActions) Store(ctx context.Context, idStr string) error {
 		return err
 	}
 
-	return s.db.AddOrder(ctx, order)
-	// return nil
+	err = s.db.AddOrder(ctx, order)
+	if err != nil && errors.Is(err, models.ErrOrderExists) {
+		if storedOrder, err := s.db.GetOrder(ctx, order.ID); err == nil {
+			if storedOrder.UserID != order.UserID {
+				return models.ErrOrderBelongsToOtherUser
+			}
+		}
+		return models.ErrOrderExists
+	}
+
+	return nil
 }
 
 /*

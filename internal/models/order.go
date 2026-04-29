@@ -3,7 +3,6 @@ package models
 import (
 	"encoding/json"
 	"errors"
-	"strconv"
 	"time"
 )
 
@@ -33,7 +32,7 @@ type (
 		Объект пользователя системы
 	*/
 	Order struct {
-		ID         int64     `json:"id"`
+		ID         string    `json:"id"`
 		UserID     string    `json:"user_id"`
 		Status     string    `json:"status"`
 		Accrual    int       `json:"accrual"`
@@ -53,12 +52,8 @@ type (
 /*
 Конструктор объекта заказа.
 */
-func NewOrder(idStr, userID, status string) (*Order, error) {
-	idInt, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		return nil, err
-	}
-	return &Order{ID: idInt, UserID: userID, Status: status}, nil
+func NewOrder(id, userID, status string) (*Order, error) {
+	return &Order{ID: id, UserID: userID, Status: status}, nil
 }
 
 /*
@@ -68,7 +63,7 @@ func (m *Order) Validate() error {
 	switch {
 	case m.UserID == "":
 		return errors.New("UserID can't be empty")
-	case m.ID == 0:
+	case m.ID == "":
 		return errors.New("ID can't be equal to zero")
 	case !validStatuses[m.Status]:
 		return errors.New("wrong status value")

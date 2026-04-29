@@ -13,9 +13,9 @@ import (
 const (
 	PsqlOrderTable = `"` + PsqlGophermartSchema + `"."orders"`
 
-	QueryInsertOrder = `INSERT INTO ` + PsqlUserTable + ` AS t (id, user_id, status) VALUES($1, $2, $3) RETURNING id, user_id`
+	QueryInsertOrder = `INSERT INTO ` + PsqlOrderTable + ` AS t (id, user_id, status) VALUES($1, $2, $3) RETURNING id`
 
-	QuerySelectOrder = `SELECT id, user_id, status, accrual, uploaded_at, updated_at FROM ` + PsqlUserTable + ` WHERE id = $1 AND user_id = $2`
+	QuerySelectOrder = `SELECT id, user_id, status, accrual, uploaded_at, updated_at FROM ` + PsqlOrderTable + ` WHERE id = $1 AND user_id = $2`
 )
 
 func (r *SQLStorage) GetOrder(ctx context.Context, orderID string) (*model.Order, error) {
@@ -44,7 +44,7 @@ func (r *SQLStorage) AddOrder(ctx context.Context, order *model.Order) error {
 }
 
 func (r *SQLStorage) addOrderTx(ctx context.Context, tx *sql.Tx, order *model.Order) error {
-	err := tx.QueryRowContext(ctx, QueryInsertUser, order.ID, order.UserID, order.Status).Scan(&order.ID, &order.UserID)
+	err := tx.QueryRowContext(ctx, QueryInsertOrder, order.ID, order.UserID, order.Status).Scan(&order.ID)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {

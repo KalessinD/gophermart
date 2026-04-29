@@ -25,8 +25,7 @@ func IsValidLuhn(number string) bool {
 	for i, r := range number {
 		digit := int(r - '0')
 
-		// Если позиция цифры не совпадает с чётностью длины, удваиваем
-		if i%2 != parity {
+		if i%2 == parity {
 			digit *= 2
 			// Если результат удвоения > 9, вычитаем 9 (или суммируем цифры результата: 12 -> 1+2=3, что то же самое что 12-9=3)
 			if digit > 9 {
