@@ -173,9 +173,9 @@ func (h *CommonHandler) commonChecks(w http.ResponseWriter, r *http.Request) (us
 
 func (h *CommonHandler) defineResponseStatusByError(err error) (status int) {
 	switch {
-	case errors.Is(err, model.ErrWrongLoginLength):
+	case errors.Is(err, model.ErrUserWrongLoginLength):
 		status = http.StatusBadRequest
-	case errors.Is(err, model.ErrWrongPasswordLength):
+	case errors.Is(err, model.ErrUserWrongPasswordLength):
 		status = http.StatusBadRequest
 	case errors.Is(err, model.ErrUserNotFound):
 		status = http.StatusUnauthorized

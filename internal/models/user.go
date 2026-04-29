@@ -13,11 +13,11 @@ const (
 )
 
 var (
-	ErrUserNotFound        = errors.New("user not found")
-	ErrWrongPassword       = errors.New("wrong password")
-	ErrUserExists          = errors.New("user exists")
-	ErrWrongLoginLength    = fmt.Errorf("login length should be at least %d characters", MinLoginLength)
-	ErrWrongPasswordLength = fmt.Errorf("password length should be at least %d characters", MinPasswordLength)
+	ErrUserNotFound            = errors.New("user not found")
+	ErrWrongPassword           = errors.New("wrong password")
+	ErrUserExists              = errors.New("user exists")
+	ErrUserWrongLoginLength    = fmt.Errorf("login length should be at least %d characters", MinLoginLength)
+	ErrUserWrongPasswordLength = fmt.Errorf("password length should be at least %d characters", MinPasswordLength)
 )
 
 type (
@@ -54,9 +54,9 @@ func NewUser(login, password, hash string, version int) *User {
 */
 func (m *User) Validate() error {
 	if len(m.Login) < MinLoginLength {
-		return ErrWrongLoginLength
+		return ErrUserWrongLoginLength
 	} else if len(m.Password) < MinPasswordLength {
-		return ErrWrongPasswordLength
+		return ErrUserWrongPasswordLength
 	}
 	return nil
 }

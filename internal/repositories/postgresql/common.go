@@ -29,8 +29,12 @@ type (
 	}
 
 	SQLStorageInterface interface {
-		GetUser(ctx context.Context, login string) (*model.User, error)
 		AddUser(ctx context.Context, user *model.User) error
+		GetUser(ctx context.Context, login string) (*model.User, error)
+
+		AddOrder(ctx context.Context, order *model.Order) error
+		GetOrder(ctx context.Context, orderID string) (*model.Order, error)
+
 		Ping(ctx context.Context) error
 	}
 )

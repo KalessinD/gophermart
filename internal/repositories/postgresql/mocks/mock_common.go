@@ -41,6 +41,20 @@ func (m *MockSQLStorageInterface) EXPECT() *MockSQLStorageInterfaceMockRecorder 
 	return m.recorder
 }
 
+// AddOrder mocks base method.
+func (m *MockSQLStorageInterface) AddOrder(ctx context.Context, order *models.Order) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddOrder", ctx, order)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddOrder indicates an expected call of AddOrder.
+func (mr *MockSQLStorageInterfaceMockRecorder) AddOrder(ctx, order any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddOrder", reflect.TypeOf((*MockSQLStorageInterface)(nil).AddOrder), ctx, order)
+}
+
 // AddUser mocks base method.
 func (m *MockSQLStorageInterface) AddUser(ctx context.Context, user *models.User) error {
 	m.ctrl.T.Helper()
@@ -53,6 +67,21 @@ func (m *MockSQLStorageInterface) AddUser(ctx context.Context, user *models.User
 func (mr *MockSQLStorageInterfaceMockRecorder) AddUser(ctx, user any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddUser", reflect.TypeOf((*MockSQLStorageInterface)(nil).AddUser), ctx, user)
+}
+
+// GetOrder mocks base method.
+func (m *MockSQLStorageInterface) GetOrder(ctx context.Context, orderID string) (*models.Order, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetOrder", ctx, orderID)
+	ret0, _ := ret[0].(*models.Order)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetOrder indicates an expected call of GetOrder.
+func (mr *MockSQLStorageInterfaceMockRecorder) GetOrder(ctx, orderID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrder", reflect.TypeOf((*MockSQLStorageInterface)(nil).GetOrder), ctx, orderID)
 }
 
 // GetUser mocks base method.

@@ -62,25 +62,25 @@ func TestUser_Validate(t *testing.T) {
 			name:     "Login too short",
 			login:    "abc", // 3 символа (min 4)
 			password: "validPassword",
-			wantErr:  models.ErrWrongLoginLength,
+			wantErr:  models.ErrUserWrongLoginLength,
 		},
 		{
 			name:     "Password too short",
 			login:    "validLogin",
 			password: "short", // 5 символов (min 8)
-			wantErr:  models.ErrWrongPasswordLength,
+			wantErr:  models.ErrUserWrongPasswordLength,
 		},
 		{
 			name:     "Empty login",
 			login:    "",
 			password: "validPassword",
-			wantErr:  models.ErrWrongLoginLength,
+			wantErr:  models.ErrUserWrongLoginLength,
 		},
 		{
 			name:     "Empty password",
 			login:    "validLogin",
 			password: "",
-			wantErr:  models.ErrWrongPasswordLength,
+			wantErr:  models.ErrUserWrongPasswordLength,
 		},
 	}
 

@@ -7,6 +7,7 @@ import (
 	"github.com/KalessinD/gophermart/internal/middleware"
 	"github.com/KalessinD/gophermart/internal/models"
 	repository "github.com/KalessinD/gophermart/internal/repositories/postgresql"
+	"github.com/KalessinD/gophermart/internal/services/alg"
 )
 
 type (
@@ -38,6 +39,10 @@ func NewOrderActions(db repository.SQLStorageInterface) OrderActionsInterface {
 Сохраняет закза в БД и отправляет его на обработку в Accrual
 */
 func (s *OrderActions) Store(ctx context.Context, idStr string) error {
+	if !alg.IsValidLuhn(idStr) {
+		return models.ErrOrderWrongFormat
+	}
+
 	claims := middleware.GetClaims(ctx)
 	order, err := models.NewOrder(idStr, claims.UserID, models.OrderNewStatus)
 	if err != nil {
@@ -48,9 +53,8 @@ func (s *OrderActions) Store(ctx context.Context, idStr string) error {
 		return err
 	}
 
-	// return s.db.AddOrder(order)
-
-	return nil
+	return s.db.AddOrder(ctx, order)
+	// return nil
 }
 
 /*

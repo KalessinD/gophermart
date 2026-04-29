@@ -18,6 +18,7 @@ var (
 	ErrOrderNotFound           = errors.New("order not found")
 	ErrOrderExists             = errors.New("order exists")
 	ErrOrderBelongsToOtherUser = errors.New("order belongs to other user")
+	ErrOrderWrongFormat        = errors.New("wrong order format")
 
 	validStatuses = map[string]bool{
 		OrderNewStatus:       true,

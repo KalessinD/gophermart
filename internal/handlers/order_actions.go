@@ -90,7 +90,7 @@ func (h *OrdersdHandler) AddOrder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", common.TextPlainContentType)
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusAccepted)
 }
 
 /*
@@ -150,6 +150,12 @@ func (h *OrdersdHandler) defineResponseStatusByError(err error) (status int) {
 	switch {
 	case errors.Is(err, model.ErrOrderNotFound):
 		status = http.StatusNoContent
+	case errors.Is(err, model.ErrOrderWrongFormat):
+		status = http.StatusUnprocessableEntity
+	case errors.Is(err, model.ErrOrderExists):
+		status = http.StatusOK
+	case errors.Is(err, model.ErrOrderBelongsToOtherUser):
+		status = http.StatusConflict
 	default:
 		status = http.StatusInternalServerError
 	}

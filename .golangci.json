@@ -78,6 +78,13 @@
           ],
           "path": "internal/models/user.go",
           "text": "G117: Marshaled struct field \"Password\""
+        },
+        {
+          "linters": [
+            "unparam"
+          ],
+          "path": "internal/repositories/postgresql/common.go",
+          "text": "withRetry - result 0 .*sql.Row.* is never used"
         }
       ]      
     },
