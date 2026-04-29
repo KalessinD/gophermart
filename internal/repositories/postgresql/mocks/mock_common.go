@@ -70,18 +70,18 @@ func (mr *MockSQLStorageInterfaceMockRecorder) AddUser(ctx, user any) *gomock.Ca
 }
 
 // GetOrder mocks base method.
-func (m *MockSQLStorageInterface) GetOrder(ctx context.Context, orderID string) (*models.Order, error) {
+func (m *MockSQLStorageInterface) GetOrder(ctx context.Context, orderID, userID string) (*models.Order, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetOrder", ctx, orderID)
+	ret := m.ctrl.Call(m, "GetOrder", ctx, orderID, userID)
 	ret0, _ := ret[0].(*models.Order)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetOrder indicates an expected call of GetOrder.
-func (mr *MockSQLStorageInterfaceMockRecorder) GetOrder(ctx, orderID any) *gomock.Call {
+func (mr *MockSQLStorageInterfaceMockRecorder) GetOrder(ctx, orderID, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrder", reflect.TypeOf((*MockSQLStorageInterface)(nil).GetOrder), ctx, orderID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrder", reflect.TypeOf((*MockSQLStorageInterface)(nil).GetOrder), ctx, orderID, userID)
 }
 
 // GetUser mocks base method.
@@ -97,6 +97,20 @@ func (m *MockSQLStorageInterface) GetUser(ctx context.Context, login string) (*m
 func (mr *MockSQLStorageInterfaceMockRecorder) GetUser(ctx, login any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUser", reflect.TypeOf((*MockSQLStorageInterface)(nil).GetUser), ctx, login)
+}
+
+// ListOrders mocks base method.
+func (m *MockSQLStorageInterface) ListOrders(ctx context.Context, userID string) models.OrdersList {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListOrders", ctx, userID)
+	ret0, _ := ret[0].(models.OrdersList)
+	return ret0
+}
+
+// ListOrders indicates an expected call of ListOrders.
+func (mr *MockSQLStorageInterfaceMockRecorder) ListOrders(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListOrders", reflect.TypeOf((*MockSQLStorageInterface)(nil).ListOrders), ctx, userID)
 }
 
 // Ping mocks base method.

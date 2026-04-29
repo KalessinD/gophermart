@@ -56,10 +56,9 @@ func (s *OrderActions) Store(ctx context.Context, idStr string) error {
 
 	err = s.db.AddOrder(ctx, order)
 	if err != nil && errors.Is(err, models.ErrOrderExists) {
-		if storedOrder, err := s.db.GetOrder(ctx, order.ID); err == nil {
-			if storedOrder.UserID != order.UserID {
-				return models.ErrOrderBelongsToOtherUser
-			}
+		_, err := s.db.GetOrder(ctx, order.ID, order.UserID)
+		if err != nil && errors.Is(err, models.ErrOrderNotFound) {
+			return models.ErrOrderBelongsToOtherUser
 		}
 		return models.ErrOrderExists
 	}

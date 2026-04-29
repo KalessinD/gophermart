@@ -32,12 +32,12 @@ type (
 		Объект пользователя системы
 	*/
 	Order struct {
-		ID         string    `json:"id"`
-		UserID     string    `json:"user_id"`
+		ID         string    `json:"number"`
+		UserID     string    `json:"-"`
 		Status     string    `json:"status"`
-		Accrual    int       `json:"accrual"`
-		UploadedAt time.Time `json:"uploaded,omitempty"`
-		UpdatedAt  time.Time `json:"updated,omitempty"`
+		Accrual    int       `json:"accrual,omitempty"`
+		UploadedAt time.Time `json:"uploaded"`
+		UpdatedAt  time.Time `json:"-"`
 	}
 
 	/*
@@ -47,6 +47,8 @@ type (
 		ToJSON() ([]byte, error)
 		Validate() error
 	}
+
+	OrdersList []*Order
 )
 
 /*

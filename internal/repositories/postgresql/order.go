@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"errors"
 
-	model "github.com/KalessinD/gophermart/internal/models"
+	"github.com/KalessinD/gophermart/internal/models"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 )
@@ -16,14 +16,19 @@ const (
 	QueryInsertOrder = `INSERT INTO ` + PsqlOrderTable + ` AS t (id, user_id, status) VALUES($1, $2, $3) RETURNING id`
 
 	QuerySelectOrder = `SELECT id, user_id, status, accrual, uploaded_at, updated_at FROM ` + PsqlOrderTable + ` WHERE id = $1 AND user_id = $2`
+
+	QuerySelectOrders = `SELECT id, user_id, status, accrual, uploaded_at, updated_at FROM ` + PsqlOrderTable + ` WHERE user_id = $1`
 )
 
-func (r *SQLStorage) GetOrder(ctx context.Context, orderID string) (*model.Order, error) {
-	order := &model.Order{}
+func (r *SQLStorage) GetOrder(ctx context.Context, orderID, userID string) (*models.Order, error) {
+	order := &models.Order{}
 
 	_, err := r.withRetry(ctx, func(ctx context.Context) (*sql.Row, error) {
-		row := r.db.QueryRowContext(ctx, QuerySelectOrder, orderID)
+		row := r.db.QueryRowContext(ctx, QuerySelectOrder, orderID, userID)
 		if err := row.Scan(&order.ID, &order.UserID, &order.Status, &order.Accrual, &order.UpdatedAt, &order.UpdatedAt); err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, models.ErrOrderNotFound
+			}
 			return nil, err
 		}
 		return row, nil
@@ -34,7 +39,29 @@ func (r *SQLStorage) GetOrder(ctx context.Context, orderID string) (*model.Order
 	return order, nil
 }
 
-func (r *SQLStorage) AddOrder(ctx context.Context, order *model.Order) error {
+func (r *SQLStorage) ListOrders(ctx context.Context, userID string) models.OrdersList {
+	rows, err := r.db.QueryContext(ctx, QuerySelectOrders, userID)
+	if err != nil {
+		return nil
+	}
+
+	defer rows.Close()
+
+	orders := make(models.OrdersList, 0, 100)
+
+	for rows.Next() {
+		order := &models.Order{}
+		err = rows.Scan(&order.ID, &order.UserID, &order.Status, &order.Accrual, &order.UpdatedAt, &order.UpdatedAt)
+
+		if err == nil {
+			orders = append(orders, order)
+		}
+	}
+
+	return orders
+}
+
+func (r *SQLStorage) AddOrder(ctx context.Context, order *models.Order) error {
 	return r.withTxRetry(ctx, func(tx *sql.Tx) error {
 		if err := r.addOrderTx(ctx, tx, order); err != nil {
 			return err
@@ -43,13 +70,13 @@ func (r *SQLStorage) AddOrder(ctx context.Context, order *model.Order) error {
 	})
 }
 
-func (r *SQLStorage) addOrderTx(ctx context.Context, tx *sql.Tx, order *model.Order) error {
+func (r *SQLStorage) addOrderTx(ctx context.Context, tx *sql.Tx, order *models.Order) error {
 	err := tx.QueryRowContext(ctx, QueryInsertOrder, order.ID, order.UserID, order.Status).Scan(&order.ID)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == pgerrcode.UniqueViolation {
-				return model.ErrOrderExists
+				return models.ErrOrderExists
 			}
 		}
 		return err

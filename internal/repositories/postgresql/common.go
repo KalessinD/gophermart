@@ -33,7 +33,8 @@ type (
 		GetUser(ctx context.Context, login string) (*model.User, error)
 
 		AddOrder(ctx context.Context, order *model.Order) error
-		GetOrder(ctx context.Context, orderID string) (*model.Order, error)
+		GetOrder(ctx context.Context, orderID, userID string) (*model.Order, error)
+		ListOrders(ctx context.Context, userID string) model.OrdersList
 
 		Ping(ctx context.Context) error
 	}
