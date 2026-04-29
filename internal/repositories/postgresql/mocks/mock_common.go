@@ -100,11 +100,12 @@ func (mr *MockSQLStorageInterfaceMockRecorder) GetUser(ctx, login any) *gomock.C
 }
 
 // ListOrders mocks base method.
-func (m *MockSQLStorageInterface) ListOrders(ctx context.Context, userID string) models.OrdersList {
+func (m *MockSQLStorageInterface) ListOrders(ctx context.Context, userID string) (models.OrdersList, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListOrders", ctx, userID)
 	ret0, _ := ret[0].(models.OrdersList)
-	return ret0
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // ListOrders indicates an expected call of ListOrders.

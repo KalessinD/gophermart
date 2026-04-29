@@ -34,7 +34,7 @@ type (
 
 		AddOrder(ctx context.Context, order *model.Order) error
 		GetOrder(ctx context.Context, orderID, userID string) (*model.Order, error)
-		ListOrders(ctx context.Context, userID string) model.OrdersList
+		ListOrders(ctx context.Context, userID string) (model.OrdersList, error)
 
 		Ping(ctx context.Context) error
 	}

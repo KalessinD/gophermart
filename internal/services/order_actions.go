@@ -69,7 +69,10 @@ func (s *OrderActions) Store(ctx context.Context, idStr string) error {
 
 func (s *OrderActions) List(ctx context.Context) (models.OrdersList, error) {
 	claims := middleware.GetClaims(ctx)
-	orders := s.db.ListOrders(ctx, claims.UserID)
+	orders, err := s.db.ListOrders(ctx, claims.UserID)
+	if err != nil {
+		return nil, err
+	}
 	return orders, nil
 }
 

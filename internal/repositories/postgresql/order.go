@@ -39,10 +39,10 @@ func (r *SQLStorage) GetOrder(ctx context.Context, orderID, userID string) (*mod
 	return order, nil
 }
 
-func (r *SQLStorage) ListOrders(ctx context.Context, userID string) models.OrdersList {
+func (r *SQLStorage) ListOrders(ctx context.Context, userID string) (models.OrdersList, error) {
 	rows, err := r.db.QueryContext(ctx, QuerySelectOrders, userID)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	defer rows.Close()
@@ -55,10 +55,12 @@ func (r *SQLStorage) ListOrders(ctx context.Context, userID string) models.Order
 
 		if err == nil {
 			orders = append(orders, order)
+		} else {
+			return nil, err
 		}
 	}
 
-	return orders
+	return orders, nil
 }
 
 func (r *SQLStorage) AddOrder(ctx context.Context, order *models.Order) error {
