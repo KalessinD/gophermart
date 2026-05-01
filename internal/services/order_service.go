@@ -56,12 +56,21 @@ func (s *OrderActions) Store(ctx context.Context, idStr string) error {
 	}
 
 	err = s.db.AddOrder(ctx, order)
-	if err != nil && errors.Is(err, models.ErrOrderExists) {
-		_, err := s.db.GetOrder(ctx, order.ID, order.UserID)
-		if err != nil && errors.Is(err, models.ErrOrderNotFound) {
-			return models.ErrOrderBelongsToOtherUser
+	if err != nil {
+		if !errors.Is(err, models.ErrOrderExists) {
+			return err
 		}
-		return models.ErrOrderExists
+
+		_, err = s.db.GetOrder(ctx, order.ID, order.UserID)
+
+		switch {
+		case errors.Is(err, models.ErrOrderNotFound):
+			return models.ErrOrderBelongsToOtherUser
+		case err == nil:
+			return models.ErrOrderExists
+		default:
+			return err
+		}
 	}
 
 	return nil
@@ -75,21 +84,3 @@ func (s *OrderActions) List(ctx context.Context) (models.OrdersList, error) {
 	}
 	return orders, nil
 }
-
-/*
-func (s *OrderActions) Add2Queue(order *models.Order) error {
-	return nil
-}
-
-func (s *OrderActions) GetFromQueue() *models.Order {
-	return nil
-}
-
-func (s *OrderActions) RestoreQueue(ctx context.Context) error {
-	// get orders from DB where status in (new, processing)
-	return nil
-}
-
-func (s *OrderActions) StartAccrualWorkerPool(ctx context.Context, n int) {
-}
-*/

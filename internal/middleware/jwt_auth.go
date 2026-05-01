@@ -12,7 +12,7 @@ import (
 
 const (
 	TokenExpiration            = time.Hour * 3
-	claimsKey       ContextKey = "claims"
+	ClaimsKey       ContextKey = "claims"
 )
 
 // Middleware для проверки JWT
@@ -42,7 +42,7 @@ func AuthMiddleware(key string) func(http.Handler) http.Handler {
 				return
 			}
 
-			ctx := context.WithValue(r.Context(), claimsKey, claims)
+			ctx := context.WithValue(r.Context(), ClaimsKey, claims)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
@@ -50,7 +50,7 @@ func AuthMiddleware(key string) func(http.Handler) http.Handler {
 
 // Вспомогательная функция для получения данных из контекста
 func GetClaims(ctx context.Context) *common.Claims {
-	if claims, ok := ctx.Value(claimsKey).(*common.Claims); ok {
+	if claims, ok := ctx.Value(ClaimsKey).(*common.Claims); ok {
 		return claims
 	}
 	return nil
