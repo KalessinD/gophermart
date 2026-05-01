@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/KalessinD/gophermart/internal/clients"
 	handler "github.com/KalessinD/gophermart/internal/handlers"
 	repository "github.com/KalessinD/gophermart/internal/repositories/postgresql"
 	service "github.com/KalessinD/gophermart/internal/services"
@@ -103,6 +104,7 @@ func NewRouter(cfg *config.GophermartConfig, log *zap.Logger, pgdb *sql.DB) (htt
 	ordersHandler := handler.NewOrdersHandler(
 		service.NewOrderActions(
 			repository.NewSQLStorage(pgdb),
+			clients.NewAccrualClient(),
 		),
 	)
 

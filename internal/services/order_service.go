@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/KalessinD/gophermart/internal/clients"
 	"github.com/KalessinD/gophermart/internal/middleware"
 	"github.com/KalessinD/gophermart/internal/models"
 	repository "github.com/KalessinD/gophermart/internal/repositories/postgresql"
@@ -16,7 +17,8 @@ type (
 		Объект службы для работы с заказами
 	*/
 	OrderActions struct {
-		db repository.SQLStorageInterface
+		db            repository.SQLStorageInterface
+		accrualClient clients.AccrualClienttInterface
 	}
 
 	/*
@@ -35,9 +37,10 @@ type (
 /*
 Конструктор службы для операций с заказами
 */
-func NewOrderActions(db repository.SQLStorageInterface) OrderActionsInterface {
+func NewOrderActions(db repository.SQLStorageInterface, client clients.AccrualClienttInterface) OrderActionsInterface {
 	return &OrderActions{
-		db: db,
+		db:            db,
+		accrualClient: client,
 	}
 }
 
@@ -87,4 +90,23 @@ func (s *OrderActions) List(ctx context.Context) (models.OrdersList, error) {
 		return nil, err
 	}
 	return orders, nil
+}
+
+func (s *OrderActions) ProcessAccrualTask(ctx context.Context, order *models.Order) error {
+	resp, err := s.accrualClient.GetOrderAccrual(ctx, order.ID)
+	if err != nil {
+		if errors.Is(err, clients.ErrServiceIsBusy) {
+			// тут можно обрабатывать 429 Too Many Requests
+		}
+		return err
+	}
+
+	_ = resp
+
+	//	err = s.db.UpdateOrderStatus(ctx, order.ID, resp.Status, resp.Accrual)
+	//	if err != nil {
+	//		return err
+	//	}
+
+	return nil
 }
