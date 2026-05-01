@@ -18,14 +18,14 @@ Content-Length: 0
 ```
   200 OK HTTP/1.1
   Content-Type: application/json
-  ...
+	...
 
   {
       "order": "<number>",
       "status": "PROCESSED",
       "accrual": 500
   }
-````
+```
   Поля объекта ответа:
 	- order — номер заказа;
 	- status — статус расчёта начисления:
@@ -37,13 +37,13 @@ Content-Length: 0
 - 204 — заказ не зарегистрирован в системе расчёта.
 - 429 — превышено количество запросов к сервису.
 	  Формат ответа:
-````
+```
   429 Too Many Requests HTTP/1.1
   Content-Type: text/plain
   Retry-After: 60
 `
   No more than N requests per minute allowed
-````
+```
 - 500 — внутренняя ошибка сервера.
 
 Заказ может быть взят в расчёт в любой момент после его совершения.
