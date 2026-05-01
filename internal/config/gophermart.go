@@ -16,6 +16,8 @@ const (
 	DefaultGracefullShutdownTimeout time.Duration = 5 * time.Second
 	DefaultPsqlDSN                  string        = ""
 	DefaultAccrualAddress           string        = ""
+	DefaultQueueWorkers             int           = 4
+	DefaultQueueBufSize             int           = 100
 
 	// got by using `openssl rand -hex 32`
 	DefaultServerEncryptionKey string = "c7f7b4036a3fb58734412433cb7a2ed8dec913c650ef8475f05f5b36422cc18d"
@@ -33,6 +35,8 @@ type (
 		PsqlDSN                  string
 		EncryptionKey            string
 		AccrualAddress           string
+		QueueBufSize             int
+		QueueWorkers             int
 	}
 
 	GophermartConfigInterface interface {
@@ -54,6 +58,8 @@ func GetDefaultGophermartConfig() *GophermartConfig {
 		PsqlDSN:                  DefaultPsqlDSN,
 		EncryptionKey:            DefaultServerEncryptionKey,
 		AccrualAddress:           DefaultAccrualAddress,
+		QueueBufSize:             DefaultQueueBufSize,
+		QueueWorkers:             DefaultQueueWorkers,
 	}
 }
 

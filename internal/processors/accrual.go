@@ -1,4 +1,4 @@
-package processor
+package processors
 
 import (
 	"context"
@@ -17,10 +17,12 @@ type (
 		Accrual uint32
 	}
 
+	TaskProcessor func(context.Context, *Task) error
+
 	// Сотрудник-одиночка для обработки заказов
 	Worker struct {
 		tasksCh     <-chan *Task
-		postProcess func(*Task) error
+		postProcess TaskProcessor
 		id          int
 		log         *zap.Logger
 		// repository repository.SQLStorageInterface
@@ -61,7 +63,7 @@ func NewTask(orderID, userID string) *Task {
 }
 
 // Сотворение сотрудника
-func NewWorker(id int, ch <-chan *Task, log *zap.Logger, action func(*Task) error) WorkerInterface {
+func NewWorker(id int, ch <-chan *Task, log *zap.Logger, action TaskProcessor) WorkerInterface {
 	return &Worker{
 		tasksCh:     ch,
 		postProcess: action,
@@ -71,13 +73,13 @@ func NewWorker(id int, ch <-chan *Task, log *zap.Logger, action func(*Task) erro
 }
 
 // Метод создания рабочего коллектива
-func NewWorkerPool(poolSize, bufSize int, log *zap.Logger, action func(*Task) error) WorkerPoolInterface {
+func NewQueueProcessor(poolSize, bufSize int, log *zap.Logger, action TaskProcessor) WorkerPoolInterface {
 	pool := &WorkerPool{
 		workers:      make([]WorkerInterface, poolSize),
 		wg:           sync.WaitGroup{},
 		mx:           sync.Mutex{},
 		workerCh:     make(chan *Task, bufSize),
-		pendingTasks: make([]*Task, bufSize),
+		pendingTasks: make([]*Task, 0, bufSize),
 		hasTasks:     make(chan struct{}, 1),
 		log:          log,
 	}
@@ -105,7 +107,7 @@ func (w *Worker) Run(ctx context.Context) {
 			if !opened {
 				return
 			}
-			err := w.postProcess(task)
+			err := w.postProcess(ctx, task)
 			if err != nil {
 				slog.Errorf("Failed to process task (orderId: %s, userID: %s): %s", task.OrderID, task.UserID, err.Error())
 			}
