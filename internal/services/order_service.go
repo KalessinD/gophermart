@@ -38,7 +38,7 @@ func NewOrderActions(db repository.SQLStorageInterface) OrderActionsInterface {
 }
 
 /*
-Сохраняет закза в БД и отправляет его на обработку в Accrual
+Сохраняет заказ в БД и отправляет его на обработку в Accrual
 */
 func (s *OrderActions) Store(ctx context.Context, idStr string) error {
 	if !alg.IsValidLuhn(idStr) {
