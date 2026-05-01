@@ -4,18 +4,15 @@ import (
 	"context"
 	"sync"
 
+	"github.com/KalessinD/gophermart/internal/models"
 	"go.uber.org/zap"
 	// repository "github.com/KalessinD/gophermart/internal/repositories/postgresql"
 )
 
 type (
 	// Тип задания в очереди
-	Task struct {
-		OrderID string
-		UserID  string
-		Status  string
-		Accrual uint32
-	}
+	Task     models.Order
+	TaskList []*Task
 
 	TaskProcessor func(context.Context, *Task) error
 
@@ -42,7 +39,7 @@ type (
 		workerCh     chan *Task
 		cancel       context.CancelFunc
 		log          *zap.Logger
-		pendingTasks []*Task
+		pendingTasks TaskList
 		hasTasks     chan struct{}
 	}
 
@@ -54,13 +51,6 @@ type (
 		Wait()
 	}
 )
-
-func NewTask(orderID, userID string) *Task {
-	return &Task{
-		OrderID: orderID,
-		UserID:  userID,
-	}
-}
 
 // Сотворение сотрудника
 func NewWorker(id int, ch <-chan *Task, log *zap.Logger, action TaskProcessor) WorkerInterface {
@@ -79,7 +69,7 @@ func NewQueueProcessor(poolSize, bufSize int, log *zap.Logger, action TaskProces
 		wg:           sync.WaitGroup{},
 		mx:           sync.Mutex{},
 		workerCh:     make(chan *Task, bufSize),
-		pendingTasks: make([]*Task, 0, bufSize),
+		pendingTasks: make(TaskList, 0, bufSize),
 		hasTasks:     make(chan struct{}, 1),
 		log:          log,
 	}
@@ -109,7 +99,7 @@ func (w *Worker) Run(ctx context.Context) {
 			}
 			err := w.postProcess(ctx, task)
 			if err != nil {
-				slog.Errorf("Failed to process task (orderId: %s, userID: %s): %s", task.OrderID, task.UserID, err.Error())
+				slog.Errorf("Failed to process task (orderID: %s, userID: %s): %s", task.ID, task.UserID, err.Error())
 			}
 		}
 	}
