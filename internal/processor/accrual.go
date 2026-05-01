@@ -124,8 +124,6 @@ func (wp *WorkerPool) Process(ctx context.Context, task *Task) {
 		return
 	case wp.hasTasks <- struct{}{}:
 	default:
-		// case <-ctx.Done():
-		//	return
 		// case wp.workerCh <- task:
 		// return
 	}
