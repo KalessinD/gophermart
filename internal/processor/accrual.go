@@ -120,6 +120,8 @@ func (wp *WorkerPool) Process(ctx context.Context, task *Task) {
 	wp.mx.Unlock()
 
 	select {
+	case <-ctx.Done():
+		return
 	case wp.hasTasks <- struct{}{}:
 	default:
 		// case <-ctx.Done():
