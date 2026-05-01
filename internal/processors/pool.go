@@ -53,7 +53,7 @@ func NewQueueProcessor(poolSize, bufSize int, log *zap.Logger, action TaskProces
 }
 
 // Обработка заказа
-func (wp *WorkerPool) Process(ctx context.Context, task *Task) {
+func (wp *WorkerPool) Process(_ context.Context, task *Task) {
 	wp.mx.Lock()
 	wp.pendingTasks = append(wp.pendingTasks, task)
 	wp.mx.Unlock()

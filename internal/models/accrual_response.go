@@ -1,6 +1,5 @@
 package models
 
 type (
-	AccrualResponse struct {
-	}
+	AccrualResponse struct{}
 )
