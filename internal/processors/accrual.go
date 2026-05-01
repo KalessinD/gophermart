@@ -122,12 +122,13 @@ func (wp *WorkerPool) Process(ctx context.Context, task *Task) {
 	wp.mx.Unlock()
 
 	select {
-	case <-ctx.Done():
-		return
+	// case <-ctx.Done():
+	// При Graceful Shutdown мы не обработаем задание, если диспетчер спал
+	// return
 	case wp.hasTasks <- struct{}{}:
 		// толкнули диспетчера, чтобы не спал
 	default:
-		// если диспечер занят, то просто идём по своим делам и никого не держим - задание в очереди
+		// если диспетчер занят, то просто идём по своим делам и никого не держим - задание в очереди
 	}
 }
 
