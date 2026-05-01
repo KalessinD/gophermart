@@ -25,7 +25,7 @@ func (r *SQLStorage) GetOrder(ctx context.Context, orderID, userID string) (*mod
 
 	_, err := r.withRetry(ctx, func(ctx context.Context) (*sql.Row, error) {
 		row := r.db.QueryRowContext(ctx, QuerySelectOrder, orderID, userID)
-		if err := row.Scan(&order.ID, &order.UserID, &order.Status, &order.Accrual, &order.UpdatedAt, &order.UpdatedAt); err != nil {
+		if err := row.Scan(&order.ID, &order.UserID, &order.Status, &order.Accrual, &order.UploadedAt, &order.UpdatedAt); err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
 				return nil, models.ErrOrderNotFound
 			}
@@ -51,7 +51,7 @@ func (r *SQLStorage) ListOrders(ctx context.Context, userID string) (models.Orde
 
 	for rows.Next() {
 		order := &models.Order{}
-		err = rows.Scan(&order.ID, &order.UserID, &order.Status, &order.Accrual, &order.UpdatedAt, &order.UpdatedAt)
+		err = rows.Scan(&order.ID, &order.UserID, &order.Status, &order.Accrual, &order.UploadedAt, &order.UpdatedAt)
 
 		if err == nil {
 			orders = append(orders, order)
