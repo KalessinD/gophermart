@@ -26,6 +26,10 @@ type (
 		Store(ctx context.Context, orderID string) error
 		List(ctx context.Context) (models.OrdersList, error)
 	}
+
+	AccrualProvider interface {
+		GetOrderAccrual(ctx context.Context, order *models.Order) (*models.AccrualResponse, error)
+	}
 )
 
 /*

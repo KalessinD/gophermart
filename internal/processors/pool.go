@@ -4,33 +4,10 @@ import (
 	"context"
 	"sync"
 
-	"github.com/KalessinD/gophermart/internal/models"
 	"go.uber.org/zap"
-	// repository "github.com/KalessinD/gophermart/internal/repositories/postgresql"
 )
 
 type (
-	// Тип задания в очереди
-	Task     models.Order
-	TaskList []*Task
-
-	TaskProcessor func(context.Context, *Task) error
-
-	// Сотрудник-одиночка для обработки заказов
-	Worker struct {
-		tasksCh     <-chan *Task
-		postProcess TaskProcessor
-		id          int
-		log         *zap.Logger
-		// repository repository.SQLStorageInterface
-	}
-
-	// Интерфейс сотрудника
-	WorkerInterface interface {
-		Run(ctx context.Context)
-		ID() int
-	}
-
 	// Объединение сотрудников в коллектив для обработки заказов сообща
 	WorkerPool struct {
 		workers      []WorkerInterface
@@ -52,18 +29,8 @@ type (
 	}
 )
 
-// Сотворение сотрудника
-func NewWorker(id int, ch <-chan *Task, log *zap.Logger, action TaskProcessor) WorkerInterface {
-	return &Worker{
-		tasksCh:     ch,
-		postProcess: action,
-		id:          id,
-		log:         log,
-	}
-}
-
 // Метод создания рабочего коллектива
-func NewQueueProcessor(poolSize, bufSize int, log *zap.Logger, action TaskProcessor) WorkerPoolInterface {
+func NewQueueProcessor(poolSize, bufSize int, log *zap.Logger, action TaskProcessor) (WorkerPoolInterface, error) {
 	pool := &WorkerPool{
 		workers:      make([]WorkerInterface, poolSize),
 		wg:           sync.WaitGroup{},
@@ -75,34 +42,14 @@ func NewQueueProcessor(poolSize, bufSize int, log *zap.Logger, action TaskProces
 	}
 
 	for i := range poolSize {
-		pool.workers[i] = NewWorker(i, pool.workerCh, log, action)
-	}
-
-	return pool
-}
-
-func (w *Worker) ID() int {
-	return w.id
-}
-
-func (w *Worker) Run(ctx context.Context) {
-	slog := w.log.Sugar()
-	slog.Infof("worker %d has been started", w.id)
-
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case task, opened := <-w.tasksCh:
-			if !opened {
-				return
-			}
-			err := w.postProcess(ctx, task)
-			if err != nil {
-				slog.Errorf("Failed to process task (orderID: %s, userID: %s): %s", task.ID, task.UserID, err.Error())
-			}
+		worker, err := NewWorker(pool.workerCh, log, action)
+		if err != nil {
+			return nil, err
 		}
+		pool.workers[i] = worker
 	}
+
+	return pool, nil
 }
 
 // Обработка заказа
@@ -140,8 +87,8 @@ func (wp *WorkerPool) Start(parentCtx context.Context) {
 	wp.wg.Add(1)
 
 	go func() {
+		defer wp.wg.Done()
 		wp.runDispatcher(ctx)
-		wp.wg.Done()
 	}()
 
 	go func() {
@@ -171,29 +118,31 @@ func (wp *WorkerPool) runDispatcher(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-wp.hasTasks:
-			// нас разбудили и попросили поработать
+			// нас попросили поработать
 		}
 
 		for {
 			wp.mx.Lock()
 
-			// Если нет задач в очереди, возвращаемся на цикла выше и ждём задач
 			if len(wp.pendingTasks) == 0 {
 				wp.mx.Unlock()
 				break
 			}
 
-			task := wp.pendingTasks[0]
+			// LIFO
+			lastIdx := len(wp.pendingTasks) - 1
+			task := wp.pendingTasks[lastIdx]
+
+			// зануляем ссылку, чтобы GC мог удалить объект
+			wp.pendingTasks[lastIdx] = nil
+
+			// Урезаем слайс. Теперь последний элемент выпал, но capacity осталась той же.
+			wp.pendingTasks = wp.pendingTasks[:lastIdx]
 
 			wp.mx.Unlock()
 
 			select {
 			case wp.workerCh <- task:
-				wp.mx.Lock()
-				if len(wp.pendingTasks) > 0 {
-					wp.pendingTasks = wp.pendingTasks[1:]
-				}
-				wp.mx.Unlock()
 
 			case <-ctx.Done():
 				return
