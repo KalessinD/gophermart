@@ -123,9 +123,9 @@ func (wp *WorkerPool) Process(ctx context.Context, task *Task) {
 	case <-ctx.Done():
 		return
 	case wp.hasTasks <- struct{}{}:
+		// толкнули диспетчера, чтобы не спал
 	default:
-		// case wp.workerCh <- task:
-		// return
+		// если диспечер занят, то просто идём по своим делам и никого не держим - задание в очереди
 	}
 }
 
@@ -178,29 +178,33 @@ func (wp *WorkerPool) runDispatcher(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-wp.hasTasks:
-			wp.drainQueue(ctx)
-		}
-	}
-}
-
-func (wp *WorkerPool) drainQueue(ctx context.Context) {
-	for {
-		wp.mx.Lock()
-		defer wp.mx.Unlock()
-
-		if len(wp.pendingTasks) == 0 {
-			return
+			// нас разбудили и попросили поработать
 		}
 
-		task := wp.pendingTasks[0]
+		for {
+			wp.mx.Lock()
 
-		select {
-		case wp.workerCh <- task:
-			wp.pendingTasks = wp.pendingTasks[1:]
-		case <-ctx.Done():
-		default:
-			return
+			// Если нет задач в очереди, возвращаемся на цикла выше и ждём задач
+			if len(wp.pendingTasks) == 0 {
+				wp.mx.Unlock()
+				break
+			}
+
+			task := wp.pendingTasks[0]
+
+			wp.mx.Unlock()
+
+			select {
+			case wp.workerCh <- task:
+				wp.mx.Lock()
+				if len(wp.pendingTasks) > 0 {
+					wp.pendingTasks = wp.pendingTasks[1:]
+				}
+				wp.mx.Unlock()
+
+			case <-ctx.Done():
+				return
+			}
 		}
-		wp.mx.Unlock()
 	}
 }
