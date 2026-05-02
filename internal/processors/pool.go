@@ -64,20 +64,29 @@ func NewQueueProcessor(
 }
 
 // Обработка заданий из единого окна заявок
-func (wp *WorkerPool) run(_ context.Context) {
-	for task := range wp.taskCh {
-		wp.mx.Lock()
-		wp.pendingTasks = append(wp.pendingTasks, task)
-		wp.mx.Unlock()
-
+func (wp *WorkerPool) run(ctx context.Context) {
+	for {
 		select {
-		// case <-ctx.Done():
-		// При Graceful Shutdown мы не обработаем задание, если диспетчер спал
-		// return
-		case wp.hasTasks <- struct{}{}:
-			// толкнули диспетчера, чтобы не спал
-		default:
-			// если диспетчер занят, то просто идём по своим делам и никого не держим - задание в очереди
+		case <-ctx.Done():
+			// TODO
+			// При Graceful Shutdown надо сделать дамп очереди диспетчером в локальный файл (sqlLIte)
+			wp.Stop()
+			return
+		case task, ok := <-wp.taskCh:
+			if !ok {
+				return
+			}
+
+			wp.mx.Lock()
+			wp.pendingTasks = append(wp.pendingTasks, task)
+			wp.mx.Unlock()
+
+			select {
+			case wp.hasTasks <- struct{}{}:
+				// толкнули диспетчера, чтобы не спал
+			default:
+				// если диспетчер занят, то просто идём по своим делам и никого не держим - задание в очереди
+			}
 		}
 	}
 }
@@ -93,7 +102,7 @@ func (wp *WorkerPool) Start(parentCtx context.Context) {
 		go func(ctx context.Context, worker WorkerInterface, log *zap.Logger) {
 			defer wp.wg.Done()
 			worker.Run(ctx, wp.pauseCh)
-			log.Sugar().Infof("worker %d is done", worker.ID())
+			log.Sugar().Infof("worker %s is done", worker.ID())
 		}(ctx, worker, wp.log)
 	}
 
@@ -135,20 +144,15 @@ func (wp *WorkerPool) runDispatcher(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
+			// TODO
+			// При Graceful Shutdown надо сделать дамп очереди в локаьный файл (sqlLIte)
 			return
 		case delay, opened := <-wp.pauseCh:
 			if !opened {
 				return
 			}
 			// пора отдохнуть, перестаём на заданное время выдавать задания в работу
-			ticker := time.NewTicker(delay)
-
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				// перерыв окончен
-			}
+			wp.sleepForAWhile(ctx, delay)
 
 			continue
 
@@ -179,9 +183,26 @@ func (wp *WorkerPool) runDispatcher(ctx context.Context) {
 			select {
 			case wp.workerCh <- task:
 
+			case delay, opened := <-wp.pauseCh:
+				if !opened {
+					return
+				}
+				// пора отдохнуть, перестаём на заданное время выдавать задания в работу
+				wp.sleepForAWhile(ctx, delay)
+
 			case <-ctx.Done():
 				return
 			}
 		}
+	}
+}
+
+func (wp *WorkerPool) sleepForAWhile(ctx context.Context, delay time.Duration) {
+	ticker := time.NewTicker(delay)
+	select {
+	case <-ctx.Done():
+		return
+	case <-ticker.C:
+		// перерыв окончен
 	}
 }
