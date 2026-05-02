@@ -68,8 +68,7 @@ func (wp *WorkerPool) run(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			// TODO
-			// При Graceful Shutdown надо сделать дамп очереди диспетчером в локальный файл (sqlLIte)
+			// При Graceful Shutdown стек заданий спасаем в диспетчере
 			wp.Stop()
 			return
 		case task, ok := <-wp.taskCh:
@@ -146,6 +145,8 @@ func (wp *WorkerPool) runDispatcher(ctx context.Context) {
 		case <-ctx.Done():
 			// TODO
 			// При Graceful Shutdown надо сделать дамп очереди в локаьный файл (sqlLIte)
+			// Важно вернуть task назад в стек перед его сохранение
+			// Будем ли выгребать задачи из workerCh в стек?
 			return
 		case delay, opened := <-wp.pauseCh:
 			if !opened {
@@ -197,6 +198,10 @@ func (wp *WorkerPool) runDispatcher(ctx context.Context) {
 				wp.sleepForAWhile(ctx, delay)
 
 			case <-ctx.Done():
+				// TODO
+				// При Graceful Shutdown надо сделать дамп очереди в локаьный файл (sqlLIte)
+				// Важно вернуть task назад в стек перед его сохранение
+				// Будем ли выгребать задачи из workerCh в стек?
 				return
 			}
 		}
