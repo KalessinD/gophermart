@@ -17,6 +17,8 @@ import (
 )
 
 const (
+	// DefaultDelay int = 60 // seconds
+
 	RetryingAttempts  = 3
 	RetryingDelay     = 100 * time.Microsecond
 	RetryingDelayStep = 200 * time.Microsecond
@@ -159,6 +161,10 @@ func (c *AccrualClient) GetOrderAccrual(ctx context.Context, orderID string) (*m
 
 	case http.StatusTooManyRequests:
 		if resp.StatusCode == http.StatusTooManyRequests {
+			// delay, err := strconv.ParseInt(req.Header.Get("Retry-After"), 10, 32)
+			// if err != nil {
+			//	delay = DefaultDelay
+			// }
 			return nil, ErrServiceIsBusy
 		}
 

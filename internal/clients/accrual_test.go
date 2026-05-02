@@ -33,7 +33,7 @@ func getTestContext(t *testing.T) context.Context {
 	ctx := t.Context()
 	ctx = context.WithValue(ctx, mw.LoggerKey, logger)
 
-	reqID := middleware.NextRequestID()
+	reqID := "test-request-id-123"
 	ctx = context.WithValue(ctx, middleware.RequestIDKey, reqID)
 
 	return ctx
