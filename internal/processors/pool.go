@@ -5,6 +5,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/KalessinD/gophermart/internal/models"
+	"github.com/KalessinD/gophermart/internal/repositories"
 	"go.uber.org/zap"
 )
 
@@ -21,10 +23,12 @@ type (
 		log          *zap.Logger
 		pendingTasks TaskList      // очередь LIFO на случай, если сотрудникам в спринт новые задачи не получается добавить
 		hasTasks     chan struct{} // канал-будильник для диспетчера, если тот задремал без работы
+		dumper       repositories.PersistStorageInterface
 	}
 
 	// Интерфейс для управления коллективом сотрудников
 	WorkerPoolInterface interface {
+		RestoreQueue()
 		Start(ctx context.Context)
 		Stop()
 		Wait()
@@ -38,6 +42,7 @@ func NewQueueProcessor(
 	log *zap.Logger,
 	inCh <-chan *Task,
 	pCh chan time.Duration,
+	dumper repositories.PersistStorageInterface,
 	action TaskProcessor,
 ) (WorkerPoolInterface, error) {
 	pool := &WorkerPool{
@@ -50,6 +55,7 @@ func NewQueueProcessor(
 		pendingTasks: make(TaskList, 0, bufSize),
 		hasTasks:     make(chan struct{}, 1),
 		log:          log,
+		dumper:       dumper,
 	}
 
 	for i := range poolSize {
@@ -143,10 +149,8 @@ func (wp *WorkerPool) runDispatcher(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			// TODO
-			// При Graceful Shutdown надо сделать дамп очереди в локаьный файл (sqlLIte)
-			// Важно вернуть task назад в стек перед его сохранение
-			// Будем ли выгребать задачи из workerCh в стек?
+			// При Graceful Shutdown надо сделать дамп очереди в локаьный файл
+			wp.dumpQueue()
 			return
 		case delay, opened := <-wp.pauseCh:
 			if !opened {
@@ -198,10 +202,14 @@ func (wp *WorkerPool) runDispatcher(ctx context.Context) {
 				wp.sleepForAWhile(ctx, delay)
 
 			case <-ctx.Done():
-				// TODO
-				// При Graceful Shutdown надо сделать дамп очереди в локаьный файл (sqlLIte)
-				// Важно вернуть task назад в стек перед его сохранение
-				// Будем ли выгребать задачи из workerCh в стек?
+				// При Graceful Shutdown надо сделать дамп очереди в локальный файл
+
+				// вернём задачу в стек, чтобы не потерялть её
+				wp.mx.Lock()
+				wp.pendingTasks = append(wp.pendingTasks, task)
+				wp.mx.Unlock()
+
+				wp.dumpQueue()
 				return
 			}
 		}
@@ -216,4 +224,63 @@ func (wp *WorkerPool) sleepForAWhile(ctx context.Context, delay time.Duration) {
 	case <-ticker.C:
 		// перерыв окончен
 	}
+}
+
+func (wp *WorkerPool) dumpQueue() {
+	wp.log.Info("goinfg to dump order's queue")
+
+	orders := make(models.OrdersList, 0, len(wp.pendingTasks))
+
+	for _, task := range wp.pendingTasks {
+		order := models.Order(*task)
+		orders = append(orders, &order)
+	}
+
+	queueIsEmpty := false
+
+	// вычитаем всё из рабочей очереди назад
+	for !queueIsEmpty {
+		select {
+		case task, ok := <-wp.workerCh:
+			if !ok {
+				break
+			}
+			order := models.Order(*task)
+			orders = append(orders, &order)
+		default:
+			queueIsEmpty = true
+		}
+	}
+
+	err := wp.dumper.Save(orders)
+	if err != nil {
+		wp.log.Error("can't dump order's queue", zap.Error(err))
+	} else {
+		wp.log.Info("order's queue has been dumped successfully")
+	}
+}
+
+func (wp *WorkerPool) RestoreQueue() {
+	// защита от умника, в целом конкуренции тут быть не должно
+	wp.mx.Lock()
+	defer wp.mx.Unlock()
+
+	orders, err := wp.dumper.Restore()
+	if err != nil {
+		wp.log.Error("can't restore order's queue from dump", zap.Error(err))
+		return
+	}
+
+	err = wp.dumper.Erase()
+	if err != nil {
+		wp.log.Error("queue won't be restored due to errro while ersaing dump, old dump is preserved", zap.Error(err))
+		return
+	}
+
+	for _, order := range orders {
+		task := Task(*order)
+		wp.pendingTasks = append(wp.pendingTasks, &task)
+	}
+
+	wp.log.Info("order's queue has been restored from dump successfully")
 }

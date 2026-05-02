@@ -1,3 +1,4 @@
+//go:generate mockgen -source=file.go -destination=mocks/mock_persist.go -package=mocks
 package repositories
 
 import (
@@ -17,6 +18,7 @@ type FileStorage struct {
 type PersistStorageInterface interface {
 	Save(orders models.OrdersList) error
 	Restore() (models.OrdersList, error)
+	Erase() error
 }
 
 func (m *FileStorage) Restore() (models.OrdersList, error) {
@@ -63,6 +65,21 @@ func (m *FileStorage) Save(orders models.OrdersList) error {
 
 	// os.WriteFile открывает файл с флагом O_TRUNC
 	return os.WriteFile(m.filePath, data, 0o600)
+}
+
+// Erase удаляет файл с сохраненными данными.
+func (m *FileStorage) Erase() error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	err := os.Remove(m.filePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+	return nil
 }
 
 func NewFileStorage(filePath string) PersistStorageInterface {

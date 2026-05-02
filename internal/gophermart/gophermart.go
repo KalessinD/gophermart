@@ -10,6 +10,7 @@ import (
 	"github.com/KalessinD/gophermart/internal/clients"
 	handler "github.com/KalessinD/gophermart/internal/handlers"
 	"github.com/KalessinD/gophermart/internal/processors"
+	"github.com/KalessinD/gophermart/internal/repositories"
 	repository "github.com/KalessinD/gophermart/internal/repositories/postgresql"
 	service "github.com/KalessinD/gophermart/internal/services"
 
@@ -121,12 +122,15 @@ func NewRouter(ctx context.Context, cfg *config.GophermartConfig, log *zap.Logge
 		log,
 		linkCh,
 		pauseCh,
+		repositories.NewFileStorage(cfg.DumperStoragePath),
 		orderService.ProcessAccrualTask,
 	)
 	if err != nil {
 		return nil, err
 	}
 
+	// если есть, что восстановить из прошлых задач - восстановим
+	processor.RestoreQueue()
 	processor.Start(ctx)
 
 	go func() {

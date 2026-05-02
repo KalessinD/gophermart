@@ -8,7 +8,9 @@ import (
 	"time"
 
 	"github.com/KalessinD/gophermart/internal/processors"
+	"github.com/KalessinD/gophermart/internal/repositories/mocks"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest"
 )
@@ -36,6 +38,13 @@ func errorTaskProcessor() processors.TaskProcessor {
 
 func TestWorkerPool_Processing(t *testing.T) {
 	t.Run("process tasks in LIFO order", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		storageMock := mocks.NewMockPersistStorageInterface(ctrl)
+
+		storageMock.EXPECT().Save(gomock.Any()).Return(nil).Times(1)
+
 		ctx, cancel := context.WithTimeout(t.Context(), 100*time.Millisecond)
 		defer cancel()
 
@@ -46,17 +55,15 @@ func TestWorkerPool_Processing(t *testing.T) {
 		var processedTasks []string
 		action := mockTaskProcessor(t, &processedTasks)
 
-		pool, err := processors.NewQueueProcessor(1, 2, log, taskCh, pauseCh, action)
+		pool, err := processors.NewQueueProcessor(1, 2, log, taskCh, pauseCh, storageMock, action)
 		require.NoError(t, err)
 
 		pool.Start(ctx)
 
-		// Отправляем задачи.
 		taskCh <- &processors.Task{ID: "1"}
 		taskCh <- &processors.Task{ID: "2"}
 		taskCh <- &processors.Task{ID: "3"}
 
-		// Даем время на обработку
 		time.Sleep(100 * time.Millisecond)
 
 		pool.Stop()
@@ -67,6 +74,12 @@ func TestWorkerPool_Processing(t *testing.T) {
 	})
 
 	t.Run("stop and wait gracefully", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		storageMock := mocks.NewMockPersistStorageInterface(ctrl)
+		storageMock.EXPECT().Save(gomock.Any()).Return(nil).AnyTimes()
+
 		ctx, cancel := context.WithTimeout(t.Context(), 100*time.Millisecond)
 		defer cancel()
 
@@ -80,7 +93,7 @@ func TestWorkerPool_Processing(t *testing.T) {
 			return nil
 		}
 
-		pool, err := processors.NewQueueProcessor(2, 5, log, taskCh, pauseCh, action)
+		pool, err := processors.NewQueueProcessor(2, 5, log, taskCh, pauseCh, storageMock, action)
 		require.NoError(t, err)
 
 		pool.Start(ctx)
@@ -95,13 +108,19 @@ func TestWorkerPool_Processing(t *testing.T) {
 	})
 
 	t.Run("handle error in processor", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		storageMock := mocks.NewMockPersistStorageInterface(ctrl)
+		storageMock.EXPECT().Save(gomock.Any()).Return(nil).AnyTimes()
+
 		ctx := t.Context()
 		log := zaptest.NewLogger(t)
 
 		taskCh := make(chan *processors.Task, 1)
 		pauseCh := make(chan time.Duration, 1)
 
-		pool, err := processors.NewQueueProcessor(1, 1, log, taskCh, pauseCh, errorTaskProcessor())
+		pool, err := processors.NewQueueProcessor(1, 1, log, taskCh, pauseCh, storageMock, errorTaskProcessor())
 		require.NoError(t, err)
 
 		pool.Start(ctx)
@@ -116,6 +135,12 @@ func TestWorkerPool_Processing(t *testing.T) {
 	})
 
 	t.Run("pause mechanism triggered by processor", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		storageMock := mocks.NewMockPersistStorageInterface(ctrl)
+		storageMock.EXPECT().Save(gomock.Any()).Return(nil).AnyTimes()
+
 		ctx, cancel := context.WithTimeout(t.Context(), 2000*time.Millisecond)
 		defer cancel()
 
@@ -125,40 +150,68 @@ func TestWorkerPool_Processing(t *testing.T) {
 
 		var callCount int32
 
-		// Используем специальный мок, который триггерит паузу для первой задачи
 		pauseDuration := 200 * time.Millisecond
 		action := func(_ context.Context, pCh chan time.Duration, _ *processors.Task) error {
 			count := atomic.AddInt32(&callCount, 1)
-
-			// Первая задача вызывает паузу (имитация 429)
 			if count == 1 {
 				pCh <- pauseDuration
 			}
 			return nil
 		}
 
-		pool, err := processors.NewQueueProcessor(1, 0, log, taskCh, pauseCh, action)
+		// bufSize = 0 для корректной проверки паузы (блокирующая отправка)
+		pool, err := processors.NewQueueProcessor(1, 0, log, taskCh, pauseCh, storageMock, action)
 		require.NoError(t, err)
 
 		pool.Start(ctx)
 
-		taskCh <- &processors.Task{ID: "task1-pause-trigger"} // Отправляем задачу 1. Она обработается мгновенно и пошлет сигнал паузы.
-		taskCh <- &processors.Task{ID: "task2"}               // Отправляем задачу 2. Она должна быть поставлена в очередь.
+		taskCh <- &processors.Task{ID: "task1-pause-trigger"}
+		taskCh <- &processors.Task{ID: "task2"}
 
-		// Ждем немного, чтобы задача 1 успела отработать и отправить сигнал в pauseCh.
-		// Диспетчер должен получить сигнал и "уснуть" на pauseDuration.
 		time.Sleep(10 * time.Millisecond)
-
-		// В этот момент (прошло 10мс, пауза 200мс):
-		// - Задача 1 уже обработана (callCount == 1).
-		// - Диспетчер спит, поэтому задача 2 еще не передана воркеру.
 		require.Equal(t, int32(1), atomic.LoadInt32(&callCount), "Task 2 should wait during pause")
 
-		// Ждем, пока пауза закончится (еще ~200мс).
 		time.Sleep(250 * time.Millisecond)
-
-		// Теперь диспетчер проснулся и передал задачу 2 воркеру.
 		require.Equal(t, int32(2), atomic.LoadInt32(&callCount), "Task 2 should be processed after pause")
+
+		pool.Stop()
+		pool.Wait()
+	})
+
+	t.Run("graceful shutdown dumps pending tasks", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		storageMock := mocks.NewMockPersistStorageInterface(ctrl)
+
+		ctx := t.Context()
+		log := zap.NewNop()
+		taskCh := make(chan *processors.Task, 10)
+		pauseCh := make(chan time.Duration, 1)
+
+		// Процессор не важен, так как воркеров не будет
+		action := func(_ context.Context, _ chan time.Duration, _ *processors.Task) error {
+			return nil
+		}
+
+		// poolSize = 0 (нет воркеров, которые могли бы "вытащить" задачу из канала)
+		// bufSize = 0 (небуферизированный канал, отправка заблокируется)
+		// Это заставит диспетчера "зависнуть" на передаче задачи, что позволит протестировать спасение задачи при Stop.
+		pool, err := processors.NewQueueProcessor(0, 0, log, taskCh, pauseCh, storageMock, action)
+		require.NoError(t, err)
+
+		pool.Start(ctx)
+
+		// Отправляем задачу. Она попадет в pendingTasks, диспетчер её вытащит,
+		// попытается отправить в workerCh и заблокируется там навсегда (некому читать).
+		taskCh <- &processors.Task{ID: "pending-task"}
+
+		// Небольшая пауза, чтобы диспетчер успел дойти до блокировки отправки
+		time.Sleep(50 * time.Millisecond)
+
+		// Ожидаем, что Save будет вызван ровно 1 раз.
+		// gomock.Len(1) проверяет, что в слайсе 1 элемент (наша необработанная задача)
+		storageMock.EXPECT().Save(gomock.Len(1)).Return(nil).Times(1)
 
 		pool.Stop()
 		pool.Wait()
