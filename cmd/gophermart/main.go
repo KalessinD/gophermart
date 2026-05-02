@@ -44,7 +44,7 @@ func runHTTPServer(cfg *config.GophermartConfig, log *zap.Logger) error {
 		return err
 	}
 
-	router, err := gm.NewRouter(cfg, log, pgdb)
+	router, err := gm.NewRouter(notifyCtx, cfg, log, pgdb)
 	if err != nil {
 		return err
 	}

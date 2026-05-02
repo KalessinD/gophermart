@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	clientMocks "github.com/KalessinD/gophermart/internal/clients/mocks"
 	"github.com/KalessinD/gophermart/internal/common"
 	"github.com/KalessinD/gophermart/internal/middleware"
 	model "github.com/KalessinD/gophermart/internal/models"
@@ -14,37 +15,25 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-// --- Вспомогательные функции ---
-
-// getCtxWithClaims создает контекст с фиктивными данными пользователя (Claims)
-// Это необходимо, так как Service вызывает middleware.GetClaims(ctx)
-func getCtxWithClaims(userID string) context.Context {
-	// Создаем структуру Claims, аналогичную той, что используется в middleware
+func getCtxWithClaims(t *testing.T, userID string) context.Context {
+	t.Helper()
 	claims := &common.Claims{
 		UserID: userID,
 	}
-	// Кладем в контекст. Предполагаем, что middleware.ContextClaimsKey экспортируется или доступна.
-	// Если ключ приватный, вам нужно будет добавить функцию-хелпер в пакет middleware.
 	return context.WithValue(context.Background(), middleware.ClaimsKey, claims)
 }
-
-// --- Тесты ---
 
 func TestOrderActions_Store(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	// Создаем мок репозитория
 	mockRepo := repoMocks.NewMockSQLStorageInterface(ctrl)
+	mockClient := clientMocks.NewMockAccrualClienttInterface(ctrl)
+	service := services.NewOrderActions(mockRepo, mockClient)
 
-	// Создаем службу с моком
-	service := services.NewOrderActions(mockRepo)
-
-	// Валидный номер заказа по Луну (стандартный тестовый номер)
 	validOrderID := "79927398713"
 	userID := "user_1"
-
-	ctx := getCtxWithClaims(userID)
+	ctx := getCtxWithClaims(t, userID)
 
 	tests := []struct {
 		name       string
@@ -56,18 +45,16 @@ func TestOrderActions_Store(t *testing.T) {
 			name:    "Success - new order",
 			orderID: validOrderID,
 			mockExpect: func() {
-				// Ожидаем, что заказ успешно добавится в БД
 				mockRepo.EXPECT().
-					AddOrder(gomock.Any(), gomock.Any()). // Можно проверить конкретный объект заказа через gomock.Eq, если важно точное совпадение
+					AddOrder(gomock.Any(), gomock.Any()).
 					Return(nil)
 			},
 			wantErr: nil,
 		},
 		{
 			name:    "Error - invalid Luhn format",
-			orderID: "123", // Невалидный номер
+			orderID: "123",
 			mockExpect: func() {
-				// БД не должна вызываться
 			},
 			wantErr: model.ErrOrderWrongFormat,
 		},
@@ -75,15 +62,13 @@ func TestOrderActions_Store(t *testing.T) {
 			name:    "Error - order belongs to other user",
 			orderID: validOrderID,
 			mockExpect: func() {
-				// 1. Попытка добавить возвращает "уже существует"
 				mockRepo.EXPECT().
 					AddOrder(gomock.Any(), gomock.Any()).
 					Return(model.ErrOrderExists)
 
-				// 2. Служба проверяет, чей это заказ
 				mockRepo.EXPECT().
 					GetOrder(gomock.Any(), validOrderID, userID).
-					Return(nil, model.ErrOrderNotFound) // Для этого юзера не найден -> значит чужой
+					Return(nil, model.ErrOrderNotFound)
 			},
 			wantErr: model.ErrOrderBelongsToOtherUser,
 		},
@@ -91,15 +76,13 @@ func TestOrderActions_Store(t *testing.T) {
 			name:    "Error - order already exists for current user",
 			orderID: validOrderID,
 			mockExpect: func() {
-				// 1. Попытка добавить возвращает "уже существует"
 				mockRepo.EXPECT().
 					AddOrder(gomock.Any(), gomock.Any()).
 					Return(model.ErrOrderExists)
 
-				// 2. Служба проверяет, чей это заказ
 				mockRepo.EXPECT().
 					GetOrder(gomock.Any(), validOrderID, userID).
-					Return(&model.Order{ID: validOrderID, UserID: userID}, nil) // Найден для этого юзера
+					Return(&model.Order{ID: validOrderID, UserID: userID}, nil)
 			},
 			wantErr: model.ErrOrderExists,
 		},
@@ -111,7 +94,7 @@ func TestOrderActions_Store(t *testing.T) {
 					AddOrder(gomock.Any(), gomock.Any()).
 					Return(errors.New("connection lost"))
 			},
-			wantErr: errors.New("connection lost"), // Служба возвращает ошибку как есть
+			wantErr: errors.New("connection lost"),
 		},
 	}
 
@@ -123,7 +106,6 @@ func TestOrderActions_Store(t *testing.T) {
 
 			if tt.wantErr != nil {
 				require.Error(t, err)
-				// Проверяем текст ошибки или тип
 				if errors.Is(tt.wantErr, model.ErrOrderWrongFormat) || errors.Is(tt.wantErr, model.ErrOrderExists) {
 					require.ErrorIs(t, err, tt.wantErr)
 				} else {
@@ -141,10 +123,11 @@ func TestOrderActions_List(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockRepo := repoMocks.NewMockSQLStorageInterface(ctrl)
-	service := services.NewOrderActions(mockRepo)
+	mockClient := clientMocks.NewMockAccrualClienttInterface(ctrl)
+	service := services.NewOrderActions(mockRepo, mockClient)
 
 	userID := "user_1"
-	ctx := getCtxWithClaims(userID)
+	ctx := getCtxWithClaims(t, userID)
 
 	tests := []struct {
 		name       string
@@ -172,7 +155,7 @@ func TestOrderActions_List(t *testing.T) {
 			mockExpect: func() {
 				mockRepo.EXPECT().
 					ListOrders(gomock.Any(), userID).
-					Return(model.OrdersList{}, nil) // Репозиторий возвращает пустой список
+					Return(model.OrdersList{}, nil)
 			},
 			wantList: model.OrdersList{},
 			wantErr:  nil,

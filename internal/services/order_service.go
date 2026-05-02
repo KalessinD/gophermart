@@ -8,6 +8,7 @@ import (
 	"github.com/KalessinD/gophermart/internal/clients"
 	"github.com/KalessinD/gophermart/internal/middleware"
 	"github.com/KalessinD/gophermart/internal/models"
+	"github.com/KalessinD/gophermart/internal/processors"
 	repository "github.com/KalessinD/gophermart/internal/repositories/postgresql"
 	"github.com/KalessinD/gophermart/internal/services/alg"
 )
@@ -27,10 +28,8 @@ type (
 	OrderActionsInterface interface {
 		Store(ctx context.Context, orderID string) error
 		List(ctx context.Context) (models.OrdersList, error)
-	}
-
-	AccrualProvider interface {
-		GetOrderAccrual(ctx context.Context, order *models.Order) (*models.AccrualResponse, error)
+		// GetOrderAccrual(ctx context.Context, order *models.Order) (*models.AccrualResponse, error)
+		ProcessAccrualTask(ctx context.Context, task *processors.Task) error
 	}
 )
 
@@ -92,11 +91,12 @@ func (s *OrderActions) List(ctx context.Context) (models.OrdersList, error) {
 	return orders, nil
 }
 
-func (s *OrderActions) ProcessAccrualTask(ctx context.Context, order *models.Order) error {
-	resp, err := s.accrualClient.GetOrderAccrual(ctx, order.ID)
+func (s *OrderActions) ProcessAccrualTask(ctx context.Context, task *processors.Task) error {
+	resp, err := s.accrualClient.GetOrderAccrual(ctx, task.ID)
 	if err != nil {
 		if errors.Is(err, clients.ErrServiceIsBusy) {
 			// тут можно обрабатывать 429 Too Many Requests
+			_ = 1
 		}
 		return err
 	}

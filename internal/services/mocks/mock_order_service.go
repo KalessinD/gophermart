@@ -14,6 +14,7 @@ import (
 	reflect "reflect"
 
 	models "github.com/KalessinD/gophermart/internal/models"
+	processors "github.com/KalessinD/gophermart/internal/processors"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -56,6 +57,20 @@ func (mr *MockOrderActionsInterfaceMockRecorder) List(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockOrderActionsInterface)(nil).List), ctx)
 }
 
+// ProcessAccrualTask mocks base method.
+func (m *MockOrderActionsInterface) ProcessAccrualTask(ctx context.Context, task *processors.Task) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProcessAccrualTask", ctx, task)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProcessAccrualTask indicates an expected call of ProcessAccrualTask.
+func (mr *MockOrderActionsInterfaceMockRecorder) ProcessAccrualTask(ctx, task any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProcessAccrualTask", reflect.TypeOf((*MockOrderActionsInterface)(nil).ProcessAccrualTask), ctx, task)
+}
+
 // Store mocks base method.
 func (m *MockOrderActionsInterface) Store(ctx context.Context, orderID string) error {
 	m.ctrl.T.Helper()
@@ -68,43 +83,4 @@ func (m *MockOrderActionsInterface) Store(ctx context.Context, orderID string) e
 func (mr *MockOrderActionsInterfaceMockRecorder) Store(ctx, orderID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Store", reflect.TypeOf((*MockOrderActionsInterface)(nil).Store), ctx, orderID)
-}
-
-// MockAccrualProvider is a mock of AccrualProvider interface.
-type MockAccrualProvider struct {
-	ctrl     *gomock.Controller
-	recorder *MockAccrualProviderMockRecorder
-	isgomock struct{}
-}
-
-// MockAccrualProviderMockRecorder is the mock recorder for MockAccrualProvider.
-type MockAccrualProviderMockRecorder struct {
-	mock *MockAccrualProvider
-}
-
-// NewMockAccrualProvider creates a new mock instance.
-func NewMockAccrualProvider(ctrl *gomock.Controller) *MockAccrualProvider {
-	mock := &MockAccrualProvider{ctrl: ctrl}
-	mock.recorder = &MockAccrualProviderMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockAccrualProvider) EXPECT() *MockAccrualProviderMockRecorder {
-	return m.recorder
-}
-
-// GetOrderAccrual mocks base method.
-func (m *MockAccrualProvider) GetOrderAccrual(ctx context.Context, order *models.Order) (*models.AccrualResponse, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetOrderAccrual", ctx, order)
-	ret0, _ := ret[0].(*models.AccrualResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetOrderAccrual indicates an expected call of GetOrderAccrual.
-func (mr *MockAccrualProviderMockRecorder) GetOrderAccrual(ctx, order any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrderAccrual", reflect.TypeOf((*MockAccrualProvider)(nil).GetOrderAccrual), ctx, order)
 }

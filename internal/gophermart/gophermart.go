@@ -9,6 +9,7 @@ import (
 
 	"github.com/KalessinD/gophermart/internal/clients"
 	handler "github.com/KalessinD/gophermart/internal/handlers"
+	"github.com/KalessinD/gophermart/internal/processors"
 	repository "github.com/KalessinD/gophermart/internal/repositories/postgresql"
 	service "github.com/KalessinD/gophermart/internal/services"
 
@@ -85,7 +86,7 @@ func GetBaseRouter(cfg *config.GophermartConfig, log *zap.Logger) *chi.Mux {
 	return router
 }
 
-func NewRouter(cfg *config.GophermartConfig, log *zap.Logger, pgdb *sql.DB) (http.Handler, error) {
+func NewRouter(ctx context.Context, cfg *config.GophermartConfig, log *zap.Logger, pgdb *sql.DB) (http.Handler, error) {
 	router := GetBaseRouter(cfg, log)
 
 	commonUserHandler := handler.NewCommonHandler(
@@ -101,12 +102,37 @@ func NewRouter(cfg *config.GophermartConfig, log *zap.Logger, pgdb *sql.DB) (htt
 		r.Post("/register", commonUserHandler.Register)
 	})
 
-	ordersHandler := handler.NewOrdersHandler(
-		service.NewOrderActions(
-			repository.NewSQLStorage(pgdb),
-			clients.NewAccrualClient(),
-		),
+	// linkCh := make(chan *processors.Task)
+
+	orderService := service.NewOrderActions(
+		repository.NewSQLStorage(pgdb),
+		clients.NewAccrualClient(),
+		// linkCh,
 	)
+
+	ordersHandler := handler.NewOrdersHandler(
+		orderService,
+	)
+
+	processor, err := processors.NewQueueProcessor(
+		cfg.QueueWorkers,
+		cfg.QueueBufSize,
+		log,
+		orderService.ProcessAccrualTask,
+		// linkCh,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	processor.Start(ctx)
+
+	go func() {
+		// nolint:revive
+		for range ctx.Done() {
+		}
+		// close(linkCh)
+	}()
 
 	balancesHandler := handler.NewBalancesHandler(
 		service.NewBalanceActions(

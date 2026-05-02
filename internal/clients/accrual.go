@@ -1,3 +1,4 @@
+//go:generate mockgen -source=accrual.go -destination=mocks/mock_accrual_client.go -package=mocks
 package clients
 
 import (
@@ -8,6 +9,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/KalessinD/gophermart/internal/common"
 	mw "github.com/KalessinD/gophermart/internal/middleware"
 	"github.com/KalessinD/gophermart/internal/models"
 	"github.com/go-chi/chi/middleware"
@@ -19,11 +21,12 @@ const (
 	RetryingDelay     = 100 * time.Microsecond
 	RetryingDelayStep = 200 * time.Microsecond
 
-	OrderBaseURL = "api/orders/"
+	OrderBaseURL = "/api/orders/"
 )
 
 var (
 	ErrServiceIsBusy = errors.New("accrual service responds about too many requests")
+	ErrOrderNotFound = errors.New("order not found in accrual system")
 )
 
 type (
@@ -48,8 +51,6 @@ func (c *AccrualClient) do(ctx context.Context, req *http.Request) (*http.Respon
 	attempts := RetryingAttempts
 	delay := RetryingDelay
 
-	var err error
-
 	for attempts > 0 {
 		// nolint:gosec
 		response, err := c.base.Do(req)
@@ -71,6 +72,8 @@ func (c *AccrualClient) do(ctx context.Context, req *http.Request) (*http.Respon
 		attempts--
 		delay += RetryingDelayStep
 	}
+
+	var err error
 
 	return nil, err
 }
@@ -130,35 +133,58 @@ Content-Length: 0
 
 func (c *AccrualClient) GetOrderAccrual(ctx context.Context, orderID string) (*models.AccrualResponse, error) {
 	log := mw.GetLogger(ctx)
-	requestID := middleware.GetReqID(ctx)
-	url := OrderBaseURL + orderID
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	url := "/api/orders/" + orderID
+	req, err := c.prepareRequest(ctx, url)
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
-
-	req.Header.Set("X-Request-ID", requestID)
 
 	resp, err := c.do(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("can't send a request: %w", err)
-	}
-
-	log.Info(
-		"Request was sent",
-		zap.String("request_id", requestID),
-		zap.String("method", req.Method),
-		zap.String("url", url),
-		zap.String("response-status", resp.Status),
-	)
-
-	if resp.StatusCode == http.StatusTooManyRequests {
-		return nil, ErrServiceIsBusy
+		return nil, fmt.Errorf("request failed: %w", err)
 	}
 
 	defer resp.Body.Close()
 
+	log.Info("Request to accrual service was sent",
+		zap.String("request_id", req.Header.Get("X-Request-Id")),
+		zap.String("url", url),
+		zap.Int("response status", resp.StatusCode),
+	)
+
+	switch resp.StatusCode {
+	case http.StatusOK:
+		return c.parseAccrualResponse(resp)
+
+	case http.StatusNoContent:
+		return nil, ErrOrderNotFound
+
+	case http.StatusTooManyRequests:
+		if resp.StatusCode == http.StatusTooManyRequests {
+			return nil, ErrServiceIsBusy
+		}
+
+	default:
+		// 500, 400 и прочие
+	}
+
+	return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+}
+
+func (c *AccrualClient) prepareRequest(ctx context.Context, url string) (*http.Request, error) {
+	requestID := middleware.GetReqID(ctx)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("X-Request-ID", requestID)
+	req.Header.Set("Accept", common.AppJSONContentType)
+
+	return req, nil
+}
+
+func (c *AccrualClient) parseAccrualResponse(resp *http.Response) (*models.AccrualResponse, error) {
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("can't read a response body: %w", err)
@@ -168,14 +194,6 @@ func (c *AccrualClient) GetOrderAccrual(ctx context.Context, orderID string) (*m
 	if err != nil {
 		return nil, fmt.Errorf("can't parse a response body: %w", err)
 	}
-
-	log.Info(
-		"Request was sent",
-		zap.String("request_id", requestID),
-		zap.String("method", req.Method),
-		zap.String("url", url),
-		zap.String("response-status", resp.Status),
-	)
 
 	return accrualResp, nil
 }
