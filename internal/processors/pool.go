@@ -187,6 +187,12 @@ func (wp *WorkerPool) runDispatcher(ctx context.Context) {
 				if !opened {
 					return
 				}
+
+				// вернём задачу в стек, чтобы не потерялть её
+				wp.mx.Lock()
+				wp.pendingTasks = append(wp.pendingTasks, task)
+				wp.mx.Unlock()
+
 				// пора отдохнуть, перестаём на заданное время выдавать задания в работу
 				wp.sleepForAWhile(ctx, delay)
 
