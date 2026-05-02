@@ -59,7 +59,7 @@ func (w *Worker) Run(ctx context.Context) {
 			}
 			err := w.postProcess(ctx, task)
 			if err != nil {
-				slog.Errorf("Failed to process task (orderID: %s, userID: %s): %s", task.ID, task.UserID, err.Error())
+				slog.Errorf("Failed to process task (orderID: %s): %s", task.ID, err.Error())
 			}
 		}
 	}
