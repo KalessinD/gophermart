@@ -74,6 +74,13 @@
       "rules": [
         {
           "linters": [
+            "testpackage"
+          ],
+          "path": "internal/processors/pool_private_test.go",
+          "text": "package should be `processors_test` instead of `processors`"
+        },
+        {
+          "linters": [
             "gosec"
           ],
           "path": "internal/models/user.go",

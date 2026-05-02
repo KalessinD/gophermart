@@ -101,3 +101,32 @@ func TestFileStorage_Restore_InvalidJSON(t *testing.T) {
 	_, ok := err.(*json.SyntaxError)
 	require.True(t, ok, "Error should be JSON syntax error")
 }
+
+func TestFileStorage_Erase(t *testing.T) {
+	t.Run("successfully erases existing file", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		filePath := filepath.Join(tmpDir, "orders.json")
+
+		err := os.WriteFile(filePath, []byte(`[{"id":"1"}]`), 0o600)
+		require.NoError(t, err, "failed to create test file")
+
+		storage := repositories.NewFileStorage(filePath)
+
+		err = storage.Erase()
+		require.NoError(t, err, "Erase should not return error for existing file")
+
+		_, err = os.Stat(filePath)
+		require.True(t, os.IsNotExist(err), "File should be deleted")
+	})
+
+	t.Run("returns nil if file does not exist", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		filePath := filepath.Join(tmpDir, "non_existent.json")
+
+		storage := repositories.NewFileStorage(filePath)
+
+		err := storage.Erase()
+
+		require.NoError(t, err, "Erase should return nil if file does not exist")
+	})
+}

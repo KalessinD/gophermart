@@ -282,8 +282,10 @@ func (wp *WorkerPool) RestoreQueue() {
 		wp.pendingTasks = append(wp.pendingTasks, &task)
 	}
 
-	// скажем диспетчеру, что пришло время поработать
-	wp.hasTasks <- struct{}{}
+	if len(orders) > 0 {
+		// скажем диспетчеру, что пришло время поработать
+		wp.hasTasks <- struct{}{}
+	}
 
 	wp.log.Info("order's queue has been restored from dump successfully")
 }
