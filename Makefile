@@ -71,6 +71,7 @@ print_title = $(ECHO) "\033[1;33m$1\033[0m"
 	lint lint-vet lint-golangci lint-golangci-fix \
 	coverage coverage-html \
 	clone-yp-autotest \
+	check-binaries \
 #	build-accrual start-accrual stop-accrual status-accrual log-accrual
 	start-gophermart stop-gophermart log-gophermart status-gophermart \
 	start-docker stop-docker \

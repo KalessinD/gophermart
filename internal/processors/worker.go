@@ -48,7 +48,7 @@ func (w *Worker) ID() string {
 
 func (w *Worker) Run(ctx context.Context, pauseCh chan time.Duration) {
 	slog := w.log.Sugar()
-	slog.Infof("worker %d has been started", w.id)
+	slog.Infof("worker %s has been started", w.id)
 
 	for {
 		select {
