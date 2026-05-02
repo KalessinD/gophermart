@@ -102,7 +102,7 @@ func NewRouter(ctx context.Context, cfg *config.GophermartConfig, log *zap.Logge
 		r.Post("/register", commonUserHandler.Register)
 	})
 
-	// linkCh := make(chan *processors.Task)
+	// linkCh := make(chan *processors.Task, cfg.QueueWorkers)
 
 	orderService := service.NewOrderActions(
 		repository.NewSQLStorage(pgdb),
