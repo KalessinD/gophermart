@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -181,4 +182,22 @@ func (a Accrual) MarshalJSON() ([]byte, error) {
 	// Собираем результат.
 	result := sign + intPart + "." + fracPart
 	return []byte(result), nil
+}
+
+// UnmarshalJSON реализует интерфейс json.Unmarshaler.
+func (a *Accrual) UnmarshalJSON(data []byte) error {
+	if string(data) == "null" {
+		*a = 0
+		return nil
+	}
+
+	var f float64
+	if err := json.Unmarshal(data, &f); err != nil {
+		return err
+	}
+
+	// Переводим в копейки, округляя до ближайшего целого
+	// math.Round нужен для корректной конвертации 5.005 -> 501 копейка
+	*a = Accrual(math.Round(f * 100))
+	return nil
 }
