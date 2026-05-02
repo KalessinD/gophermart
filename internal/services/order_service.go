@@ -81,7 +81,7 @@ func (s *OrderService) Store(ctx context.Context, idStr string) error {
 		}
 	}
 
-	s.sendOrderToProcess(order)
+	s.sendOrderToProcessor(order)
 
 	return nil
 }
@@ -125,7 +125,7 @@ func (s *OrderService) ProcessAccrualTask(ctx context.Context, task *processors.
 	return nil
 }
 
-func (s *OrderService) sendOrderToProcess(order *models.Order) {
+func (s *OrderService) sendOrderToProcessor(order *models.Order) {
 	task := processors.Task(*order)
 
 	select {
