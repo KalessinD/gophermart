@@ -15,9 +15,11 @@ import (
 func TestNewWorker(t *testing.T) {
 	logger := zaptest.NewLogger(t)
 	ch := make(chan *processors.Task)
+	pauseCh := make(chan time.Duration, 1)
+	defer close(pauseCh)
 
 	t.Run("success creation", func(t *testing.T) {
-		worker, err := processors.NewWorker(ch, logger, func(_ context.Context, _ *processors.Task) error {
+		worker, err := processors.NewWorker(ch, logger, func(_ context.Context, _ chan time.Duration, _ *processors.Task) error {
 			return nil
 		})
 
@@ -32,9 +34,11 @@ func TestWorker_Run(t *testing.T) {
 
 	t.Run("stops on context cancel", func(t *testing.T) {
 		ch := make(chan *processors.Task)
+		pauseCh := make(chan time.Duration, 1)
+		defer close(pauseCh)
 
 		// Мок процессора, который просто ждет вечно (если воркер не остановится, тест зависнет)
-		action := func(_ context.Context, _ *processors.Task) error {
+		action := func(_ context.Context, _ chan time.Duration, _ *processors.Task) error {
 			return nil
 		}
 
@@ -46,7 +50,7 @@ func TestWorker_Run(t *testing.T) {
 
 		go func() {
 			defer wg.Done()
-			worker.Run(ctx)
+			worker.Run(ctx, pauseCh)
 		}()
 
 		// Даем воркеру время запуститься
@@ -72,6 +76,8 @@ func TestWorker_Run(t *testing.T) {
 
 	t.Run("stops on channel close", func(t *testing.T) {
 		ch := make(chan *processors.Task)
+		pauseCh := make(chan time.Duration, 1)
+		defer close(pauseCh)
 
 		worker, _ := processors.NewWorker(ch, logger, nil)
 
@@ -81,7 +87,7 @@ func TestWorker_Run(t *testing.T) {
 
 		go func() {
 			defer wg.Done()
-			worker.Run(ctx)
+			worker.Run(ctx, pauseCh)
 		}()
 
 		// Закрываем канал
@@ -103,11 +109,13 @@ func TestWorker_Run(t *testing.T) {
 
 	t.Run("processes tasks correctly", func(t *testing.T) {
 		ch := make(chan *processors.Task, 1)
+		pauseCh := make(chan time.Duration, 1)
+		defer close(pauseCh)
 
 		var processedTask *processors.Task
 		var mu sync.Mutex
 
-		action := func(_ context.Context, task *processors.Task) error {
+		action := func(_ context.Context, _ chan time.Duration, task *processors.Task) error {
 			mu.Lock()
 			defer mu.Unlock()
 			processedTask = task
@@ -121,7 +129,7 @@ func TestWorker_Run(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		go worker.Run(ctx)
+		go worker.Run(ctx, pauseCh)
 
 		ch <- task
 
@@ -134,11 +142,13 @@ func TestWorker_Run(t *testing.T) {
 
 	t.Run("handles processing error and continues", func(t *testing.T) {
 		ch := make(chan *processors.Task, 2)
+		pauseCh := make(chan time.Duration, 1)
+		defer close(pauseCh)
 
 		callCount := 0
 		var mu sync.Mutex
 
-		action := func(_ context.Context, _ *processors.Task) error {
+		action := func(_ context.Context, _ chan time.Duration, _ *processors.Task) error {
 			mu.Lock()
 			defer mu.Unlock()
 			callCount++
@@ -153,7 +163,7 @@ func TestWorker_Run(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		go worker.Run(ctx)
+		go worker.Run(ctx, pauseCh)
 
 		ch <- &processors.Task{}
 		ch <- &processors.Task{}

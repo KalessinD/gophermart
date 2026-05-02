@@ -2,6 +2,7 @@ package processors
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -19,7 +20,7 @@ type (
 
 	// Интерфейс сотрудника
 	WorkerInterface interface {
-		Run(ctx context.Context)
+		Run(ctx context.Context, pauseCh chan time.Duration)
 		ID() string
 	}
 )
@@ -45,7 +46,7 @@ func (w *Worker) ID() string {
 	return w.id
 }
 
-func (w *Worker) Run(ctx context.Context) {
+func (w *Worker) Run(ctx context.Context, pauseCh chan time.Duration) {
 	slog := w.log.Sugar()
 	slog.Infof("worker %d has been started", w.id)
 
@@ -57,7 +58,7 @@ func (w *Worker) Run(ctx context.Context) {
 			if !opened {
 				return
 			}
-			err := w.postProcess(ctx, task)
+			err := w.postProcess(ctx, pauseCh, task)
 			if err != nil {
 				slog.Errorf("Failed to process task (orderID: %s): %s", task.ID, err.Error())
 			}

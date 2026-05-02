@@ -4,6 +4,7 @@ package services
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/KalessinD/gophermart/internal/clients"
 	"github.com/KalessinD/gophermart/internal/middleware"
@@ -30,7 +31,7 @@ type (
 		Store(ctx context.Context, orderID string) error
 		List(ctx context.Context) (models.OrdersList, error)
 		// GetOrderAccrual(ctx context.Context, order *models.Order) (*models.AccrualResponse, error)
-		ProcessAccrualTask(ctx context.Context, task *processors.Task) error
+		ProcessAccrualTask(ctx context.Context, pauseCh chan time.Duration, task *processors.Task) error
 	}
 )
 
@@ -95,12 +96,20 @@ func (s *OrderService) List(ctx context.Context) (models.OrdersList, error) {
 	return orders, nil
 }
 
-func (s *OrderService) ProcessAccrualTask(ctx context.Context, task *processors.Task) error {
+func (s *OrderService) ProcessAccrualTask(ctx context.Context, pauseCh chan time.Duration, task *processors.Task) error {
 	resp, err := s.accrualClient.GetOrderAccrual(ctx, task.ID)
 	if err != nil {
 		if errors.Is(err, clients.ErrServiceIsBusy) {
-			// тут можно обрабатывать 429 Too Many Requests
-			_ = 1
+			castedErr, ok := err.(clients.AccrualError)
+			if ok {
+				delay := castedErr.GetDelay()
+				select {
+				case pauseCh <- delay:
+					// отправили сигнал о паузе всем воркерам
+				default:
+					// если заблокировали, значит отправил сигнал сосед, спокойно идем дальше по своим делам
+				}
+			}
 		}
 		return err
 	}

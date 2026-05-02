@@ -103,6 +103,7 @@ func NewRouter(ctx context.Context, cfg *config.GophermartConfig, log *zap.Logge
 	})
 
 	linkCh := make(chan *processors.Task, cfg.WorkerPoolChanBuffer)
+	pauseCh := make(chan time.Duration, 1)
 
 	orderService := service.NewOrderService(
 		repository.NewSQLStorage(pgdb),
@@ -119,6 +120,7 @@ func NewRouter(ctx context.Context, cfg *config.GophermartConfig, log *zap.Logge
 		cfg.QueueBufSize,
 		log,
 		linkCh,
+		pauseCh,
 		orderService.ProcessAccrualTask,
 	)
 	if err != nil {

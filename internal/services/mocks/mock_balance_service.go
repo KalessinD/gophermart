@@ -16,32 +16,32 @@ import (
 	gomock "go.uber.org/mock/gomock"
 )
 
-// MockBalanceActionsInterface is a mock of BalanceActionsInterface interface.
-type MockBalanceActionsInterface struct {
+// MockBalanceServiceInterface is a mock of BalanceServiceInterface interface.
+type MockBalanceServiceInterface struct {
 	ctrl     *gomock.Controller
-	recorder *MockBalanceActionsInterfaceMockRecorder
+	recorder *MockBalanceServiceInterfaceMockRecorder
 	isgomock struct{}
 }
 
-// MockBalanceActionsInterfaceMockRecorder is the mock recorder for MockBalanceActionsInterface.
-type MockBalanceActionsInterfaceMockRecorder struct {
-	mock *MockBalanceActionsInterface
+// MockBalanceServiceInterfaceMockRecorder is the mock recorder for MockBalanceServiceInterface.
+type MockBalanceServiceInterfaceMockRecorder struct {
+	mock *MockBalanceServiceInterface
 }
 
-// NewMockBalanceActionsInterface creates a new mock instance.
-func NewMockBalanceActionsInterface(ctrl *gomock.Controller) *MockBalanceActionsInterface {
-	mock := &MockBalanceActionsInterface{ctrl: ctrl}
-	mock.recorder = &MockBalanceActionsInterfaceMockRecorder{mock}
+// NewMockBalanceServiceInterface creates a new mock instance.
+func NewMockBalanceServiceInterface(ctrl *gomock.Controller) *MockBalanceServiceInterface {
+	mock := &MockBalanceServiceInterface{ctrl: ctrl}
+	mock.recorder = &MockBalanceServiceInterfaceMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockBalanceActionsInterface) EXPECT() *MockBalanceActionsInterfaceMockRecorder {
+func (m *MockBalanceServiceInterface) EXPECT() *MockBalanceServiceInterfaceMockRecorder {
 	return m.recorder
 }
 
 // Store mocks base method.
-func (m *MockBalanceActionsInterface) Store(ctx context.Context) error {
+func (m *MockBalanceServiceInterface) Store(ctx context.Context) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Store", ctx)
 	ret0, _ := ret[0].(error)
@@ -49,7 +49,7 @@ func (m *MockBalanceActionsInterface) Store(ctx context.Context) error {
 }
 
 // Store indicates an expected call of Store.
-func (mr *MockBalanceActionsInterfaceMockRecorder) Store(ctx any) *gomock.Call {
+func (mr *MockBalanceServiceInterfaceMockRecorder) Store(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Store", reflect.TypeOf((*MockBalanceActionsInterface)(nil).Store), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Store", reflect.TypeOf((*MockBalanceServiceInterface)(nil).Store), ctx)
 }

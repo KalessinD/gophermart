@@ -3,6 +3,7 @@ package processors
 import (
 	"context"
 	"sync"
+	"time"
 
 	"go.uber.org/zap"
 )
@@ -13,8 +14,9 @@ type (
 		workers      []WorkerInterface // open-space для сотрдуников
 		wg           sync.WaitGroup
 		mx           sync.Mutex
-		workerCh     chan *Task   // для передачи заданий сотрудникам
-		taskCh       <-chan *Task // входной канал для получения заданий от сервиса
+		workerCh     chan *Task         // для передачи заданий сотрудникам
+		taskCh       <-chan *Task       // входной канал для получения заданий от сервиса
+		pauseCh      chan time.Duration // входной канал для диспетчера, чтобы объявить всеобщий перерыв
 		cancel       context.CancelFunc
 		log          *zap.Logger
 		pendingTasks TaskList      // очередь LIFO на случай, если сотрудникам в спринт новые задачи не получается добавить
@@ -30,12 +32,20 @@ type (
 )
 
 // Метод создания рабочего коллектива
-func NewQueueProcessor(poolSize, bufSize int, log *zap.Logger, inCh <-chan *Task, action TaskProcessor) (WorkerPoolInterface, error) {
+func NewQueueProcessor(
+	poolSize,
+	bufSize int,
+	log *zap.Logger,
+	inCh <-chan *Task,
+	pCh chan time.Duration,
+	action TaskProcessor,
+) (WorkerPoolInterface, error) {
 	pool := &WorkerPool{
 		workers:      make([]WorkerInterface, poolSize),
 		wg:           sync.WaitGroup{},
 		mx:           sync.Mutex{},
 		taskCh:       inCh,
+		pauseCh:      pCh,
 		workerCh:     make(chan *Task, bufSize),
 		pendingTasks: make(TaskList, 0, bufSize),
 		hasTasks:     make(chan struct{}, 1),
@@ -82,7 +92,7 @@ func (wp *WorkerPool) Start(parentCtx context.Context) {
 	for _, worker := range wp.workers {
 		go func(ctx context.Context, worker WorkerInterface, log *zap.Logger) {
 			defer wp.wg.Done()
-			worker.Run(ctx)
+			worker.Run(ctx, wp.pauseCh)
 			log.Sugar().Infof("worker %d is done", worker.ID())
 		}(ctx, worker, wp.log)
 	}
@@ -126,8 +136,24 @@ func (wp *WorkerPool) runDispatcher(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			return
+		case delay, opened := <-wp.pauseCh:
+			if !opened {
+				return
+			}
+			// пора отдохнуть, перестаём на заданное время выдавать задания в работу
+			ticker := time.NewTicker(delay)
+
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				// перерыв окончен
+			}
+
+			continue
+
 		case <-wp.hasTasks:
-			// нас попросили поработать
+			// есть для нас работёнка
 		}
 
 		for {

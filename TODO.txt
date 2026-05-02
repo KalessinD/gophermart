@@ -1,2 +1,9 @@
-1. на старте сервера мы читаем закзаы из БД со статусом NEW/PROCESSING и отдаются в пул воркеров (целиком или чанками?)
-2. где хранить баланс и списания? в отдельной таблице?
+1. при завершении сервера (ctx.Done) - дампим задачи из буфера на диск (файл, sqlLite)
+2. на старте сервера мы читаем заказы из файла/sqlLite (либо из БД со статусом NEW/PROCESSING), отдаем в пул воркеров
+3. где хранить баланс и списания? в отдельной таблице?
+4. Контейнер для gophermart
+
+Осталось сделать ручки для тестов:
+    --- FAIL: TestGophermart/TestEndToEnd/check_balance (0.00s)
+    --- FAIL: TestGophermart/TestEndToEnd/recheck_balance (0.00s)
+    --- FAIL: TestGophermart/TestEndToEnd/check_withdrawals (0.00s)

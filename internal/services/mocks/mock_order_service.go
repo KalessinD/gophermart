@@ -12,38 +12,39 @@ package mocks
 import (
 	context "context"
 	reflect "reflect"
+	time "time"
 
 	models "github.com/KalessinD/gophermart/internal/models"
 	processors "github.com/KalessinD/gophermart/internal/processors"
 	gomock "go.uber.org/mock/gomock"
 )
 
-// MockOrderActionsInterface is a mock of OrderActionsInterface interface.
-type MockOrderActionsInterface struct {
+// MockOrderServiceInterface is a mock of OrderServiceInterface interface.
+type MockOrderServiceInterface struct {
 	ctrl     *gomock.Controller
-	recorder *MockOrderActionsInterfaceMockRecorder
+	recorder *MockOrderServiceInterfaceMockRecorder
 	isgomock struct{}
 }
 
-// MockOrderActionsInterfaceMockRecorder is the mock recorder for MockOrderActionsInterface.
-type MockOrderActionsInterfaceMockRecorder struct {
-	mock *MockOrderActionsInterface
+// MockOrderServiceInterfaceMockRecorder is the mock recorder for MockOrderServiceInterface.
+type MockOrderServiceInterfaceMockRecorder struct {
+	mock *MockOrderServiceInterface
 }
 
-// NewMockOrderActionsInterface creates a new mock instance.
-func NewMockOrderActionsInterface(ctrl *gomock.Controller) *MockOrderActionsInterface {
-	mock := &MockOrderActionsInterface{ctrl: ctrl}
-	mock.recorder = &MockOrderActionsInterfaceMockRecorder{mock}
+// NewMockOrderServiceInterface creates a new mock instance.
+func NewMockOrderServiceInterface(ctrl *gomock.Controller) *MockOrderServiceInterface {
+	mock := &MockOrderServiceInterface{ctrl: ctrl}
+	mock.recorder = &MockOrderServiceInterfaceMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockOrderActionsInterface) EXPECT() *MockOrderActionsInterfaceMockRecorder {
+func (m *MockOrderServiceInterface) EXPECT() *MockOrderServiceInterfaceMockRecorder {
 	return m.recorder
 }
 
 // List mocks base method.
-func (m *MockOrderActionsInterface) List(ctx context.Context) (models.OrdersList, error) {
+func (m *MockOrderServiceInterface) List(ctx context.Context) (models.OrdersList, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "List", ctx)
 	ret0, _ := ret[0].(models.OrdersList)
@@ -52,27 +53,27 @@ func (m *MockOrderActionsInterface) List(ctx context.Context) (models.OrdersList
 }
 
 // List indicates an expected call of List.
-func (mr *MockOrderActionsInterfaceMockRecorder) List(ctx any) *gomock.Call {
+func (mr *MockOrderServiceInterfaceMockRecorder) List(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockOrderActionsInterface)(nil).List), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockOrderServiceInterface)(nil).List), ctx)
 }
 
 // ProcessAccrualTask mocks base method.
-func (m *MockOrderActionsInterface) ProcessAccrualTask(ctx context.Context, task *processors.Task) error {
+func (m *MockOrderServiceInterface) ProcessAccrualTask(ctx context.Context, pauseCh chan time.Duration, task *processors.Task) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProcessAccrualTask", ctx, task)
+	ret := m.ctrl.Call(m, "ProcessAccrualTask", ctx, pauseCh, task)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // ProcessAccrualTask indicates an expected call of ProcessAccrualTask.
-func (mr *MockOrderActionsInterfaceMockRecorder) ProcessAccrualTask(ctx, task any) *gomock.Call {
+func (mr *MockOrderServiceInterfaceMockRecorder) ProcessAccrualTask(ctx, pauseCh, task any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProcessAccrualTask", reflect.TypeOf((*MockOrderActionsInterface)(nil).ProcessAccrualTask), ctx, task)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProcessAccrualTask", reflect.TypeOf((*MockOrderServiceInterface)(nil).ProcessAccrualTask), ctx, pauseCh, task)
 }
 
 // Store mocks base method.
-func (m *MockOrderActionsInterface) Store(ctx context.Context, orderID string) error {
+func (m *MockOrderServiceInterface) Store(ctx context.Context, orderID string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Store", ctx, orderID)
 	ret0, _ := ret[0].(error)
@@ -80,7 +81,7 @@ func (m *MockOrderActionsInterface) Store(ctx context.Context, orderID string) e
 }
 
 // Store indicates an expected call of Store.
-func (mr *MockOrderActionsInterfaceMockRecorder) Store(ctx, orderID any) *gomock.Call {
+func (mr *MockOrderServiceInterfaceMockRecorder) Store(ctx, orderID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Store", reflect.TypeOf((*MockOrderActionsInterface)(nil).Store), ctx, orderID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Store", reflect.TypeOf((*MockOrderServiceInterface)(nil).Store), ctx, orderID)
 }

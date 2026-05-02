@@ -17,32 +17,32 @@ import (
 	gomock "go.uber.org/mock/gomock"
 )
 
-// MockCommonActionsInterface is a mock of CommonActionsInterface interface.
-type MockCommonActionsInterface struct {
+// MockCommonServiceInterface is a mock of CommonServiceInterface interface.
+type MockCommonServiceInterface struct {
 	ctrl     *gomock.Controller
-	recorder *MockCommonActionsInterfaceMockRecorder
+	recorder *MockCommonServiceInterfaceMockRecorder
 	isgomock struct{}
 }
 
-// MockCommonActionsInterfaceMockRecorder is the mock recorder for MockCommonActionsInterface.
-type MockCommonActionsInterfaceMockRecorder struct {
-	mock *MockCommonActionsInterface
+// MockCommonServiceInterfaceMockRecorder is the mock recorder for MockCommonServiceInterface.
+type MockCommonServiceInterfaceMockRecorder struct {
+	mock *MockCommonServiceInterface
 }
 
-// NewMockCommonActionsInterface creates a new mock instance.
-func NewMockCommonActionsInterface(ctrl *gomock.Controller) *MockCommonActionsInterface {
-	mock := &MockCommonActionsInterface{ctrl: ctrl}
-	mock.recorder = &MockCommonActionsInterfaceMockRecorder{mock}
+// NewMockCommonServiceInterface creates a new mock instance.
+func NewMockCommonServiceInterface(ctrl *gomock.Controller) *MockCommonServiceInterface {
+	mock := &MockCommonServiceInterface{ctrl: ctrl}
+	mock.recorder = &MockCommonServiceInterfaceMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockCommonActionsInterface) EXPECT() *MockCommonActionsInterfaceMockRecorder {
+func (m *MockCommonServiceInterface) EXPECT() *MockCommonServiceInterfaceMockRecorder {
 	return m.recorder
 }
 
 // Login mocks base method.
-func (m *MockCommonActionsInterface) Login(ctx context.Context, user *models.User) error {
+func (m *MockCommonServiceInterface) Login(ctx context.Context, user *models.User) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Login", ctx, user)
 	ret0, _ := ret[0].(error)
@@ -50,13 +50,13 @@ func (m *MockCommonActionsInterface) Login(ctx context.Context, user *models.Use
 }
 
 // Login indicates an expected call of Login.
-func (mr *MockCommonActionsInterfaceMockRecorder) Login(ctx, user any) *gomock.Call {
+func (mr *MockCommonServiceInterfaceMockRecorder) Login(ctx, user any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Login", reflect.TypeOf((*MockCommonActionsInterface)(nil).Login), ctx, user)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Login", reflect.TypeOf((*MockCommonServiceInterface)(nil).Login), ctx, user)
 }
 
 // Register mocks base method.
-func (m *MockCommonActionsInterface) Register(ctx context.Context, user *models.User) error {
+func (m *MockCommonServiceInterface) Register(ctx context.Context, user *models.User) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Register", ctx, user)
 	ret0, _ := ret[0].(error)
@@ -64,7 +64,7 @@ func (m *MockCommonActionsInterface) Register(ctx context.Context, user *models.
 }
 
 // Register indicates an expected call of Register.
-func (mr *MockCommonActionsInterfaceMockRecorder) Register(ctx, user any) *gomock.Call {
+func (mr *MockCommonServiceInterfaceMockRecorder) Register(ctx, user any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Register", reflect.TypeOf((*MockCommonActionsInterface)(nil).Register), ctx, user)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Register", reflect.TypeOf((*MockCommonServiceInterface)(nil).Register), ctx, user)
 }
