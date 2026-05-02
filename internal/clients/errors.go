@@ -17,6 +17,13 @@ type (
 		delay time.Duration
 		cause error
 	}
+
+	AccrualError interface {
+		Error() string
+		GetDelay() time.Duration
+		Is(target error) bool
+		Unwrap() error
+	}
 )
 
 func NewErrServiceIsBusy(delay time.Duration, cause error) *ServiceIsBusyError {
