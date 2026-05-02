@@ -31,7 +31,7 @@ var (
 
 type (
 	AccrualClient struct {
-		base *http.Client
+		Base *http.Client
 	}
 
 	AccrualClienttInterface interface {
@@ -42,7 +42,7 @@ type (
 // Конструктор http-клиента для запросов в систему Accrual
 func NewAccrualClient(timeout time.Duration) AccrualClienttInterface {
 	return &AccrualClient{
-		base: &http.Client{Timeout: timeout},
+		Base: &http.Client{Timeout: timeout},
 	}
 }
 
@@ -53,7 +53,7 @@ func (c *AccrualClient) do(ctx context.Context, req *http.Request) (*http.Respon
 
 	for attempts > 0 {
 		// nolint:gosec
-		response, err := c.base.Do(req)
+		response, err := c.Base.Do(req)
 
 		if err == nil {
 			return response, nil
@@ -73,9 +73,7 @@ func (c *AccrualClient) do(ctx context.Context, req *http.Request) (*http.Respon
 		delay += RetryingDelayStep
 	}
 
-	var err error
-
-	return nil, err
+	return nil, errors.New("no response")
 }
 
 /*
