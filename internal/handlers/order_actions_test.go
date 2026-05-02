@@ -28,7 +28,7 @@ func TestOrdersdHandler_AddOrder(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockService := mocks.NewMockOrderActionsInterface(ctrl)
+	mockService := mocks.NewMockOrderServiceInterface(ctrl)
 	handler := handlers.NewOrdersHandler(mockService)
 
 	tests := []struct {
@@ -116,7 +116,7 @@ func TestOrdersdHandler_ListOrders(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockService := mocks.NewMockOrderActionsInterface(ctrl)
+	mockService := mocks.NewMockOrderServiceInterface(ctrl)
 	handler := handlers.NewOrdersHandler(mockService)
 
 	tests := []struct {
