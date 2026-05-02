@@ -40,9 +40,9 @@ type (
 )
 
 // Конструктор http-клиента для запросов в систему Accrual
-func NewAccrualClient() AccrualClienttInterface {
+func NewAccrualClient(timeout time.Duration) AccrualClienttInterface {
 	return &AccrualClient{
-		base: &http.Client{},
+		base: &http.Client{Timeout: timeout},
 	}
 }
 

@@ -106,7 +106,7 @@ func NewRouter(ctx context.Context, cfg *config.GophermartConfig, log *zap.Logge
 
 	orderService := service.NewOrderActions(
 		repository.NewSQLStorage(pgdb),
-		clients.NewAccrualClient(),
+		clients.NewAccrualClient(cfg.AccrualClientTImeout),
 		// linkCh,
 	)
 
