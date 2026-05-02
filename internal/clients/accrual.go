@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/KalessinD/gophermart/internal/common"
-	mw "github.com/KalessinD/gophermart/internal/middleware"
 	"github.com/KalessinD/gophermart/internal/models"
 	"github.com/go-chi/chi/middleware"
 	"go.uber.org/zap"
@@ -23,17 +23,16 @@ const (
 	RetryingDelay     = 100 * time.Microsecond
 	RetryingDelayStep = 200 * time.Microsecond
 
-	OrderBaseURL = "/api/orders/"
-)
+	BaseAPIOrderURL = "/api/orders/"
 
-var (
-	ErrServiceIsBusy = errors.New("accrual service responds about too many requests")
-	ErrOrderNotFound = errors.New("order not found in accrual system")
+	DefaultDelay = 10
 )
 
 type (
 	AccrualClient struct {
-		Base *http.Client
+		BaseClient *http.Client
+		BaseURL    string
+		Log        *zap.Logger
 	}
 
 	AccrualClienttInterface interface {
@@ -42,9 +41,11 @@ type (
 )
 
 // Конструктор http-клиента для запросов в систему Accrual
-func NewAccrualClient(timeout time.Duration) AccrualClienttInterface {
+func NewAccrualClient(accrualAddress string, timeout time.Duration, log *zap.Logger) AccrualClienttInterface {
 	return &AccrualClient{
-		Base: &http.Client{Timeout: timeout},
+		BaseClient: &http.Client{Timeout: timeout},
+		BaseURL:    accrualAddress,
+		Log:        log,
 	}
 }
 
@@ -55,7 +56,7 @@ func (c *AccrualClient) do(ctx context.Context, req *http.Request) (*http.Respon
 
 	for attempts > 0 {
 		// nolint:gosec
-		response, err := c.Base.Do(req)
+		response, err := c.BaseClient.Do(req)
 
 		if err == nil {
 			return response, nil
@@ -132,8 +133,7 @@ Content-Length: 0
 */
 
 func (c *AccrualClient) GetOrderAccrual(ctx context.Context, orderID string) (*models.AccrualResponse, error) {
-	log := mw.GetLogger(ctx)
-	url := "/api/orders/" + orderID
+	url := c.BaseURL + "/api/orders/" + orderID
 	req, err := c.prepareRequest(ctx, url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
@@ -146,7 +146,7 @@ func (c *AccrualClient) GetOrderAccrual(ctx context.Context, orderID string) (*m
 
 	defer resp.Body.Close()
 
-	log.Info("Request to accrual service was sent",
+	c.Log.Info("Request to accrual service was sent",
 		zap.String("request_id", req.Header.Get("X-Request-Id")),
 		zap.String("url", url),
 		zap.Int("response status", resp.StatusCode),
@@ -161,11 +161,16 @@ func (c *AccrualClient) GetOrderAccrual(ctx context.Context, orderID string) (*m
 
 	case http.StatusTooManyRequests:
 		if resp.StatusCode == http.StatusTooManyRequests {
-			// delay, err := strconv.ParseInt(req.Header.Get("Retry-After"), 10, 32)
-			// if err != nil {
-			//	delay = DefaultDelay
-			// }
-			return nil, ErrServiceIsBusy
+			var delay int
+			var err error
+			retryAfter := resp.Header.Get("Retry-After")
+			if retryAfter != "" {
+				delay, err = strconv.Atoi(retryAfter)
+			}
+			if err != nil || delay == 0 {
+				delay = DefaultDelay
+			}
+			return nil, NewErrServiceIsBusy(time.Duration(delay)*time.Second, errors.New(resp.Status))
 		}
 
 	default:

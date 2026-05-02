@@ -9,11 +9,29 @@ import (
 	"github.com/KalessinD/gophermart/internal/common"
 	"github.com/KalessinD/gophermart/internal/middleware"
 	model "github.com/KalessinD/gophermart/internal/models"
+	"github.com/KalessinD/gophermart/internal/processors"
 	repoMocks "github.com/KalessinD/gophermart/internal/repositories/postgresql/mocks"
 	"github.com/KalessinD/gophermart/internal/services"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 )
+
+func processTaskChannel(t *testing.T, ch <-chan *processors.Task) {
+	t.Helper()
+
+	go func() {
+		for {
+			select {
+			case _, opened := <-ch:
+				if !opened {
+					return
+				}
+			case <-t.Context().Done():
+				return
+			}
+		}
+	}()
+}
 
 func getCtxWithClaims(t *testing.T, userID string) context.Context {
 	t.Helper()
@@ -27,9 +45,13 @@ func TestOrderActions_Store(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	outCh := make(chan *processors.Task)
+
+	processTaskChannel(t, outCh)
+
 	mockRepo := repoMocks.NewMockSQLStorageInterface(ctrl)
 	mockClient := clientMocks.NewMockAccrualClienttInterface(ctrl)
-	service := services.NewOrderActions(mockRepo, mockClient)
+	service := services.NewOrderService(mockRepo, mockClient, outCh)
 
 	validOrderID := "79927398713"
 	userID := "user_1"
@@ -122,9 +144,13 @@ func TestOrderActions_List(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	outCh := make(chan *processors.Task)
+
+	processTaskChannel(t, outCh)
+
 	mockRepo := repoMocks.NewMockSQLStorageInterface(ctrl)
 	mockClient := clientMocks.NewMockAccrualClienttInterface(ctrl)
-	service := services.NewOrderActions(mockRepo, mockClient)
+	service := services.NewOrderService(mockRepo, mockClient, outCh)
 
 	userID := "user_1"
 	ctx := getCtxWithClaims(t, userID)

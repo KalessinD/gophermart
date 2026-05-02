@@ -11,14 +11,14 @@ type (
 	/*
 		Объект службы балансов
 	*/
-	BalanceActions struct {
+	BalanceService struct {
 		db repository.SQLStorageInterface
 	}
 
 	/*
 		Интерфейс оОъекта службы балансов
 	*/
-	BalanceActionsInterface interface {
+	BalanceServiceInterface interface {
 		Store(ctx context.Context) error
 	}
 )
@@ -26,8 +26,8 @@ type (
 /*
 Конструктор службы балансов
 */
-func NewBalanceActions(db repository.SQLStorageInterface) OrderActionsInterface {
-	return &OrderActions{
+func NewBalanceService(db repository.SQLStorageInterface) OrderServiceInterface {
+	return &OrderService{
 		db: db,
 	}
 }
@@ -35,7 +35,7 @@ func NewBalanceActions(db repository.SQLStorageInterface) OrderActionsInterface 
 /*
 Сохраняет баланс
 */
-func (s *BalanceActions) Store(_ context.Context) error {
+func (s *BalanceService) Store(_ context.Context) error {
 	_ = s.db
 	return nil
 }

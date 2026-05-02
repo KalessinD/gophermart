@@ -17,15 +17,16 @@ type (
 	/*
 		Объект службы для работы с заказами
 	*/
-	OrderActions struct {
+	OrderService struct {
 		db            repository.SQLStorageInterface
 		accrualClient clients.AccrualClienttInterface
+		reportOrderCh chan *processors.Task
 	}
 
 	/*
 		Интерфейс оОъекта службы заказов
 	*/
-	OrderActionsInterface interface {
+	OrderServiceInterface interface {
 		Store(ctx context.Context, orderID string) error
 		List(ctx context.Context) (models.OrdersList, error)
 		// GetOrderAccrual(ctx context.Context, order *models.Order) (*models.AccrualResponse, error)
@@ -36,17 +37,18 @@ type (
 /*
 Конструктор службы для операций с заказами
 */
-func NewOrderActions(db repository.SQLStorageInterface, client clients.AccrualClienttInterface) OrderActionsInterface {
-	return &OrderActions{
+func NewOrderService(db repository.SQLStorageInterface, client clients.AccrualClienttInterface, outCh chan *processors.Task) OrderServiceInterface {
+	return &OrderService{
 		db:            db,
 		accrualClient: client,
+		reportOrderCh: outCh,
 	}
 }
 
 /*
 Сохраняет заказ в БД и отправляет его на обработку в Accrual
 */
-func (s *OrderActions) Store(ctx context.Context, idStr string) error {
+func (s *OrderService) Store(ctx context.Context, idStr string) error {
 	if !alg.IsValidLuhn(idStr) {
 		return models.ErrOrderWrongFormat
 	}
@@ -79,10 +81,12 @@ func (s *OrderActions) Store(ctx context.Context, idStr string) error {
 		}
 	}
 
+	s.sendOrderToProcess(order)
+
 	return nil
 }
 
-func (s *OrderActions) List(ctx context.Context) (models.OrdersList, error) {
+func (s *OrderService) List(ctx context.Context) (models.OrdersList, error) {
 	claims := middleware.GetClaims(ctx)
 	orders, err := s.db.ListOrders(ctx, claims.UserID)
 	if err != nil {
@@ -91,7 +95,7 @@ func (s *OrderActions) List(ctx context.Context) (models.OrdersList, error) {
 	return orders, nil
 }
 
-func (s *OrderActions) ProcessAccrualTask(ctx context.Context, task *processors.Task) error {
+func (s *OrderService) ProcessAccrualTask(ctx context.Context, task *processors.Task) error {
 	resp, err := s.accrualClient.GetOrderAccrual(ctx, task.ID)
 	if err != nil {
 		if errors.Is(err, clients.ErrServiceIsBusy) {
@@ -101,12 +105,33 @@ func (s *OrderActions) ProcessAccrualTask(ctx context.Context, task *processors.
 		return err
 	}
 
-	_ = resp
+	order := models.Order(*task)
 
-	//	err = s.db.UpdateOrderStatus(ctx, order.ID, resp.Status, resp.Accrual)
-	//	if err != nil {
-	//		return err
-	//	}
+	err = order.SetStatus(resp.Status)
+	if err != nil {
+		return err
+	}
+
+	err = order.SetAccrual(resp.Accrual.String())
+	if err != nil {
+		return err
+	}
+
+	err = s.db.UpdateOrder(ctx, &order)
+	if err != nil {
+		return err
+	}
 
 	return nil
+}
+
+func (s *OrderService) sendOrderToProcess(order *models.Order) {
+	task := processors.Task(*order)
+
+	select {
+	case s.reportOrderCh <- &task:
+		// успех успешный
+	default:
+		// канал переполнен, в базе заказ уже есть, так что как-нибудь потом из БД прочтем и дообработаем
+	}
 }

@@ -14,14 +14,14 @@ type (
 	/*
 		Объект службы для действий пользователя, нетребующих авторизации
 	*/
-	CommonActions struct {
+	CommonService struct {
 		db repository.SQLStorageInterface
 	}
 
 	/*
 		Интерфейс оОъекта службы для действий пользователя, нетребующих авторизации
 	*/
-	CommonActionsInterface interface {
+	CommonServiceInterface interface {
 		Login(ctx context.Context, user *models.User) error
 		Register(ctx context.Context, user *models.User) error
 	}
@@ -30,8 +30,8 @@ type (
 /*
 Конструктор службы для операций нетребующих авторизации пользователя.
 */
-func NewCommonAction(db repository.SQLStorageInterface) CommonActionsInterface {
-	return &CommonActions{
+func NewCommonService(db repository.SQLStorageInterface) CommonServiceInterface {
+	return &CommonService{
 		db: db,
 	}
 }
@@ -40,7 +40,7 @@ func NewCommonAction(db repository.SQLStorageInterface) CommonActionsInterface {
 Выполняет вход в систему.
 Может вернуть ошибку, если таковая произошла
 */
-func (s *CommonActions) Login(ctx context.Context, userFromRequest *models.User) error {
+func (s *CommonService) Login(ctx context.Context, userFromRequest *models.User) error {
 	if err := userFromRequest.Validate(); err != nil {
 		return err
 	}
@@ -66,7 +66,7 @@ func (s *CommonActions) Login(ctx context.Context, userFromRequest *models.User)
 Выполняет регистрацию новоого пользователя в системе.
 Может вернуть ошибку, если таковая произошла
 */
-func (s *CommonActions) Register(ctx context.Context, user *models.User) error {
+func (s *CommonService) Register(ctx context.Context, user *models.User) error {
 	if err := user.Validate(); err != nil {
 		return err
 	}
@@ -76,7 +76,7 @@ func (s *CommonActions) Register(ctx context.Context, user *models.User) error {
 	return s.db.AddUser(ctx, user)
 }
 
-func (s *CommonActions) fillUserIfRequired(user *models.User) error {
+func (s *CommonService) fillUserIfRequired(user *models.User) error {
 	if user.Password != "" && user.Hash == "" {
 		hash, err := s.hashPassword(user.Password)
 		if err != nil {
@@ -87,7 +87,7 @@ func (s *CommonActions) fillUserIfRequired(user *models.User) error {
 	return nil
 }
 
-func (s *CommonActions) hashPassword(password string) (string, error) {
+func (s *CommonService) hashPassword(password string) (string, error) {
 	// Cost 10 — это баланс между безопасностью и скоростью.
 	// Чем выше число, тем медленнее считается хеш, тем сложнее подобрать пароль.
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)

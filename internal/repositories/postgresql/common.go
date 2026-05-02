@@ -7,7 +7,7 @@ import (
 	"errors"
 	"time"
 
-	model "github.com/KalessinD/gophermart/internal/models"
+	"github.com/KalessinD/gophermart/internal/models"
 	"github.com/KalessinD/gophermart/internal/services/db/pgerrors"
 	"github.com/jackc/pgx/v5/pgconn"
 )
@@ -29,12 +29,13 @@ type (
 	}
 
 	SQLStorageInterface interface {
-		AddUser(ctx context.Context, user *model.User) error
-		GetUser(ctx context.Context, login string) (*model.User, error)
+		AddUser(ctx context.Context, user *models.User) error
+		GetUser(ctx context.Context, login string) (*models.User, error)
 
-		AddOrder(ctx context.Context, order *model.Order) error
-		GetOrder(ctx context.Context, orderID, userID string) (*model.Order, error)
-		ListOrders(ctx context.Context, userID string) (model.OrdersList, error)
+		AddOrder(ctx context.Context, order *models.Order) error
+		GetOrder(ctx context.Context, orderID, userID string) (*models.Order, error)
+		ListOrders(ctx context.Context, userID string) (models.OrdersList, error)
+		UpdateOrder(ctx context.Context, order *models.Order) error
 
 		Ping(ctx context.Context) error
 	}

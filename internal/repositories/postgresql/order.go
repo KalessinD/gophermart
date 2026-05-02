@@ -15,6 +15,16 @@ const (
 
 	QueryInsertOrder = `INSERT INTO ` + PsqlOrderTable + ` AS t (id, user_id, status) VALUES($1, $2, $3) RETURNING id`
 
+	QueryUpdateOrder = `
+		INSERT INTO ` + PsqlOrderTable + ` AS t (id, user_id, status, accrual)
+		VALUES($1, $2, $3, $4)
+		ON CONFLICT (id)
+		DO UPDATE SET
+			accrual = EXCLUDED.accrual,
+			status = EXCLUDED.status
+		RETURNING id
+	`
+
 	QuerySelectOrder = `SELECT id, user_id, status, accrual, uploaded_at, updated_at FROM ` + PsqlOrderTable + ` WHERE id = $1 AND user_id = $2`
 
 	QuerySelectOrders = `SELECT id, user_id, status, accrual, uploaded_at, updated_at FROM ` + PsqlOrderTable + ` WHERE user_id = $1`
@@ -74,6 +84,29 @@ func (r *SQLStorage) AddOrder(ctx context.Context, order *models.Order) error {
 
 func (r *SQLStorage) addOrderTx(ctx context.Context, tx *sql.Tx, order *models.Order) error {
 	err := tx.QueryRowContext(ctx, QueryInsertOrder, order.ID, order.UserID, order.Status).Scan(&order.ID)
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			if pgErr.Code == pgerrcode.UniqueViolation {
+				return models.ErrOrderExists
+			}
+		}
+		return err
+	}
+	return nil
+}
+
+func (r *SQLStorage) UpdateOrder(ctx context.Context, order *models.Order) error {
+	return r.withTxRetry(ctx, func(tx *sql.Tx) error {
+		if err := r.updateOrderTx(ctx, tx, order); err != nil {
+			return err
+		}
+		return nil
+	})
+}
+
+func (r *SQLStorage) updateOrderTx(ctx context.Context, tx *sql.Tx, order *models.Order) error {
+	err := tx.QueryRowContext(ctx, QueryUpdateOrder, order.ID, order.UserID, order.Status, order.Accrual).Scan(&order.ID)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {

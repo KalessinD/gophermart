@@ -127,3 +127,17 @@ func (mr *MockSQLStorageInterfaceMockRecorder) Ping(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Ping", reflect.TypeOf((*MockSQLStorageInterface)(nil).Ping), ctx)
 }
+
+// UpdateOrder mocks base method.
+func (m *MockSQLStorageInterface) UpdateOrder(ctx context.Context, order *models.Order) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateOrder", ctx, order)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateOrder indicates an expected call of UpdateOrder.
+func (mr *MockSQLStorageInterfaceMockRecorder) UpdateOrder(ctx, order any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateOrder", reflect.TypeOf((*MockSQLStorageInterface)(nil).UpdateOrder), ctx, order)
+}

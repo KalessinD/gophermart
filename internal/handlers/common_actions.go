@@ -21,7 +21,7 @@ const (
 
 type (
 	CommonHandler struct {
-		commonService service.CommonActionsInterface
+		commonService service.CommonServiceInterface
 		authService   service.AuthInterface
 	}
 
@@ -34,7 +34,7 @@ type (
 /*
 Конструктор для хендлеров работающих без автоиизации
 */
-func NewCommonHandler(commonService service.CommonActionsInterface, authService service.AuthInterface) CommonHandlerInterface {
+func NewCommonHandler(commonService service.CommonServiceInterface, authService service.AuthInterface) CommonHandlerInterface {
 	return &CommonHandler{
 		commonService: commonService,
 		authService:   authService,

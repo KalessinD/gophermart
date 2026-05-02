@@ -18,7 +18,7 @@ func TestCommonAction_Register(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockDB := mocks.NewMockSQLStorageInterface(ctrl)
-	svc := services.NewCommonAction(mockDB)
+	svc := services.NewCommonService(mockDB)
 
 	t.Run("successful registration", func(t *testing.T) {
 		ctx := t.Context()
@@ -76,7 +76,7 @@ func TestCommonAction_Login(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockDB := mocks.NewMockSQLStorageInterface(ctrl)
-	svc := services.NewCommonAction(mockDB)
+	svc := services.NewCommonService(mockDB)
 
 	password := "password123"
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)

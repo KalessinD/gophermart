@@ -90,7 +90,7 @@ func NewRouter(ctx context.Context, cfg *config.GophermartConfig, log *zap.Logge
 	router := GetBaseRouter(cfg, log)
 
 	commonUserHandler := handler.NewCommonHandler(
-		service.NewCommonAction(
+		service.NewCommonService(
 			repository.NewSQLStorage(pgdb),
 		),
 		service.NewAuthService(cfg.EncryptionKey),
@@ -102,12 +102,12 @@ func NewRouter(ctx context.Context, cfg *config.GophermartConfig, log *zap.Logge
 		r.Post("/register", commonUserHandler.Register)
 	})
 
-	// linkCh := make(chan *processors.Task, cfg.WorkerPoolChanBuffer)
+	linkCh := make(chan *processors.Task, cfg.WorkerPoolChanBuffer)
 
-	orderService := service.NewOrderActions(
+	orderService := service.NewOrderService(
 		repository.NewSQLStorage(pgdb),
-		clients.NewAccrualClient(cfg.AccrualClientTImeout),
-		// linkCh,
+		clients.NewAccrualClient(cfg.AccrualAddress, cfg.AccrualClientTImeout, log),
+		linkCh,
 	)
 
 	ordersHandler := handler.NewOrdersHandler(
@@ -118,8 +118,8 @@ func NewRouter(ctx context.Context, cfg *config.GophermartConfig, log *zap.Logge
 		cfg.QueueWorkers,
 		cfg.QueueBufSize,
 		log,
+		linkCh,
 		orderService.ProcessAccrualTask,
-		// linkCh,
 	)
 	if err != nil {
 		return nil, err
@@ -131,11 +131,11 @@ func NewRouter(ctx context.Context, cfg *config.GophermartConfig, log *zap.Logge
 		// nolint:revive
 		for range ctx.Done() {
 		}
-		// close(linkCh)
+		close(linkCh)
 	}()
 
 	balancesHandler := handler.NewBalancesHandler(
-		service.NewBalanceActions(
+		service.NewBalanceService(
 			repository.NewSQLStorage(pgdb),
 		),
 	)

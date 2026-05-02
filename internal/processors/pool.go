@@ -10,19 +10,19 @@ import (
 type (
 	// Объединение сотрудников в коллектив для обработки заказов сообща
 	WorkerPool struct {
-		workers      []WorkerInterface
+		workers      []WorkerInterface // open-space для сотрдуников
 		wg           sync.WaitGroup
 		mx           sync.Mutex
-		workerCh     chan *Task
+		workerCh     chan *Task   // для передачи заданий сотрудникам
+		taskCh       <-chan *Task // входной канал для получения заданий от сервиса
 		cancel       context.CancelFunc
 		log          *zap.Logger
-		pendingTasks TaskList
-		hasTasks     chan struct{}
+		pendingTasks TaskList      // очередь LIFO на случай, если сотрудникам в спринт новые задачи не получается добавить
+		hasTasks     chan struct{} // канал-будильник для диспетчера, если тот задремал без работы
 	}
 
 	// Интерфейс для управления коллективом сотрудников
 	WorkerPoolInterface interface {
-		Process(ctx context.Context, task *Task)
 		Start(ctx context.Context)
 		Stop()
 		Wait()
@@ -30,11 +30,12 @@ type (
 )
 
 // Метод создания рабочего коллектива
-func NewQueueProcessor(poolSize, bufSize int, log *zap.Logger, action TaskProcessor) (WorkerPoolInterface, error) {
+func NewQueueProcessor(poolSize, bufSize int, log *zap.Logger, inCh <-chan *Task, action TaskProcessor) (WorkerPoolInterface, error) {
 	pool := &WorkerPool{
 		workers:      make([]WorkerInterface, poolSize),
 		wg:           sync.WaitGroup{},
 		mx:           sync.Mutex{},
+		taskCh:       inCh,
 		workerCh:     make(chan *Task, bufSize),
 		pendingTasks: make(TaskList, 0, bufSize),
 		hasTasks:     make(chan struct{}, 1),
@@ -52,20 +53,22 @@ func NewQueueProcessor(poolSize, bufSize int, log *zap.Logger, action TaskProces
 	return pool, nil
 }
 
-// Обработка заказа
-func (wp *WorkerPool) Process(_ context.Context, task *Task) {
-	wp.mx.Lock()
-	wp.pendingTasks = append(wp.pendingTasks, task)
-	wp.mx.Unlock()
+// Обработка заданий из единого окна заявок
+func (wp *WorkerPool) run(_ context.Context) {
+	for task := range wp.taskCh {
+		wp.mx.Lock()
+		wp.pendingTasks = append(wp.pendingTasks, task)
+		wp.mx.Unlock()
 
-	select {
-	// case <-ctx.Done():
-	// При Graceful Shutdown мы не обработаем задание, если диспетчер спал
-	// return
-	case wp.hasTasks <- struct{}{}:
-		// толкнули диспетчера, чтобы не спал
-	default:
-		// если диспетчер занят, то просто идём по своим делам и никого не держим - задание в очереди
+		select {
+		// case <-ctx.Done():
+		// При Graceful Shutdown мы не обработаем задание, если диспетчер спал
+		// return
+		case wp.hasTasks <- struct{}{}:
+			// толкнули диспетчера, чтобы не спал
+		default:
+			// если диспетчер занят, то просто идём по своим делам и никого не держим - задание в очереди
+		}
 	}
 }
 
@@ -74,7 +77,7 @@ func (wp *WorkerPool) Start(parentCtx context.Context) {
 	ctx, cancel := context.WithCancel(parentCtx)
 	wp.cancel = cancel
 
-	wp.wg.Add(len(wp.workers))
+	wp.wg.Add(len(wp.workers) + 2) // + dispatcher + inputQueueReader
 
 	for _, worker := range wp.workers {
 		go func(ctx context.Context, worker WorkerInterface, log *zap.Logger) {
@@ -84,13 +87,19 @@ func (wp *WorkerPool) Start(parentCtx context.Context) {
 		}(ctx, worker, wp.log)
 	}
 
-	wp.wg.Add(1)
+	// inputQueueReader
+	go func() {
+		defer wp.wg.Done()
+		wp.run(ctx)
+	}()
 
+	// dispatcher
 	go func() {
 		defer wp.wg.Done()
 		wp.runDispatcher(ctx)
 	}()
 
+	// waiter is waiting to do some durty works at finish
 	go func() {
 		wp.wg.Wait()
 		close(wp.workerCh)

@@ -16,7 +16,7 @@ import (
 
 type (
 	OrdersdHandler struct {
-		orderService service.OrderActionsInterface
+		orderService service.OrderServiceInterface
 	}
 
 	RestrictedHandlerInterface interface {
@@ -28,7 +28,7 @@ type (
 /*
 Конструктор для хендлеров работающих с заказами
 */
-func NewOrdersHandler(orderService service.OrderActionsInterface) RestrictedHandlerInterface {
+func NewOrdersHandler(orderService service.OrderServiceInterface) RestrictedHandlerInterface {
 	return &OrdersdHandler{
 		orderService: orderService,
 	}
