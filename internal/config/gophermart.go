@@ -18,6 +18,7 @@ const (
 	DefaultAccrualAddress           string        = ""
 	DefaultQueueWorkers             int           = 4
 	DefaultQueueBufSize             int           = 100
+	DefaultWorkerPoolChanBuffer     int           = 32
 	DefaultAccrualClientTImeout     time.Duration = 3 * time.Second
 
 	// got by using `openssl rand -hex 32`
@@ -39,6 +40,7 @@ type (
 		QueueBufSize             int
 		QueueWorkers             int
 		AccrualClientTImeout     time.Duration
+		WorkerPoolChanBuffer     int
 	}
 
 	GophermartConfigInterface interface {
@@ -63,6 +65,7 @@ func GetDefaultGophermartConfig() *GophermartConfig {
 		QueueBufSize:             DefaultQueueBufSize,
 		QueueWorkers:             DefaultQueueWorkers,
 		AccrualClientTImeout:     DefaultAccrualClientTImeout,
+		WorkerPoolChanBuffer:     DefaultWorkerPoolChanBuffer,
 	}
 }
 
