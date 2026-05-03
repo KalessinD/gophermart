@@ -16,7 +16,7 @@ import (
 func TestFileStorage_SaveAndRestore(t *testing.T) {
 	tmpDir := t.TempDir()
 	filePath := filepath.Join(tmpDir, "orders.json")
-	storage := repositories.NewFileStorage(filePath)
+	storage := repositories.NewJSONFileStorage(filePath)
 
 	// Подготовка данных.
 	// Важно: time.Time нужно округлять, так как JSON маршалинг может потерять наносекунды
@@ -68,7 +68,7 @@ func TestFileStorage_SaveAndRestore(t *testing.T) {
 }
 
 func TestFileStorage_Restore_FileNotExists(t *testing.T) {
-	storage := repositories.NewFileStorage("/non/existent/path/orders.json")
+	storage := repositories.NewJSONFileStorage("/non/existent/path/orders.json")
 	data, err := storage.Restore()
 	require.NoError(t, err)
 	require.Nil(t, data)
@@ -79,7 +79,7 @@ func TestFileStorage_Restore_EmptyFile(t *testing.T) {
 	require.NoError(t, err)
 	defer tmpFile.Close()
 
-	storage := repositories.NewFileStorage(tmpFile.Name())
+	storage := repositories.NewJSONFileStorage(tmpFile.Name())
 
 	data, err := storage.Restore()
 	require.NoError(t, err)
@@ -92,7 +92,7 @@ func TestFileStorage_Restore_InvalidJSON(t *testing.T) {
 	_, _ = tmpFile.WriteString("not a json")
 	tmpFile.Close()
 
-	storage := repositories.NewFileStorage(tmpFile.Name())
+	storage := repositories.NewJSONFileStorage(tmpFile.Name())
 
 	_, err = storage.Restore()
 	require.Error(t, err, "Should return error on invalid JSON")
@@ -110,7 +110,7 @@ func TestFileStorage_Erase(t *testing.T) {
 		err := os.WriteFile(filePath, []byte(`[{"id":"1"}]`), 0o600)
 		require.NoError(t, err, "failed to create test file")
 
-		storage := repositories.NewFileStorage(filePath)
+		storage := repositories.NewJSONFileStorage(filePath)
 
 		err = storage.Erase()
 		require.NoError(t, err, "Erase should not return error for existing file")
@@ -123,7 +123,7 @@ func TestFileStorage_Erase(t *testing.T) {
 		tmpDir := t.TempDir()
 		filePath := filepath.Join(tmpDir, "non_existent.json")
 
-		storage := repositories.NewFileStorage(filePath)
+		storage := repositories.NewJSONFileStorage(filePath)
 
 		err := storage.Erase()
 

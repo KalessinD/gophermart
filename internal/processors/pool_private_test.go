@@ -62,7 +62,7 @@ func TestWorkerPool_DumpQueue(t *testing.T) {
 	t.Run("saves pending and buffered tasks", func(t *testing.T) {
 		dir := t.TempDir()
 		filePath := filepath.Join(dir, "dump.json")
-		storage := repositories.NewFileStorage(filePath)
+		storage := repositories.NewJSONFileStorage(filePath)
 
 		wp := testPoolSetup(t, storage)
 
@@ -97,7 +97,7 @@ func TestWorkerPool_RestoreQueue(t *testing.T) {
 	t.Run("restore and erase", func(t *testing.T) {
 		dir := t.TempDir()
 		filePath := filepath.Join(dir, "dump.json")
-		storage := repositories.NewFileStorage(filePath)
+		storage := repositories.NewJSONFileStorage(filePath)
 
 		ordersToSave := models.OrdersList{
 			{ID: "restore_1"},
@@ -130,7 +130,7 @@ func TestWorkerPool_RestoreQueue(t *testing.T) {
 
 	t.Run("no file no panic", func(t *testing.T) {
 		dir := t.TempDir()
-		storage := repositories.NewFileStorage(filepath.Join(dir, "missing.json"))
+		storage := repositories.NewJSONFileStorage(filepath.Join(dir, "missing.json"))
 		wp := testPoolSetup(t, storage)
 
 		wp.RestoreQueue()

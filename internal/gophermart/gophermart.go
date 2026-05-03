@@ -122,7 +122,7 @@ func NewRouter(ctx context.Context, cfg *config.GophermartConfig, log *zap.Logge
 		log,
 		linkCh,
 		pauseCh,
-		repositories.NewFileStorage(cfg.DumperStoragePath),
+		repositories.NewJSONFileStorage(cfg.DumperStoragePath),
 		orderService.ProcessAccrualTask,
 	)
 	if err != nil {
