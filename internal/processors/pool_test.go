@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zaptest"
 )
 
 // MockTaskProcessor создает мок-функцию обработки, которая записывает ID задач.
@@ -115,7 +114,7 @@ func TestWorkerPool_Processing(t *testing.T) {
 		storageMock.EXPECT().Save(gomock.Any()).Return(nil).AnyTimes()
 
 		ctx := t.Context()
-		log := zaptest.NewLogger(t)
+		log := zap.NewNop()
 
 		taskCh := make(chan *processors.Task, 1)
 		pauseCh := make(chan time.Duration, 1)

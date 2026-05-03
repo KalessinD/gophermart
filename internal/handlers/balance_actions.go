@@ -73,9 +73,9 @@ func (h *BalanceHandler) GetLoyalityBalance(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		status := h.defineResponseStatusByError(err)
 		if status == http.StatusInternalServerError {
-			log.Errorf("balance service failed: %s", err.Error())
+			log.Errorf("balance service failed to get balance: %s", err.Error())
 		} else {
-			log.Debugf("balance service failed: %s", err.Error())
+			log.Debugf("balance service failed to get balance: %s", err.Error())
 		}
 
 		w.WriteHeader(status)
@@ -148,9 +148,9 @@ func (h *BalanceHandler) WithdrawBalance(w http.ResponseWriter, r *http.Request)
 	if err := h.balanceService.Withdraw(ctx, withdrawn); err != nil {
 		status := h.defineResponseStatusByError(err)
 		if status == http.StatusInternalServerError {
-			log.Errorf("balance service failed: %s", err.Error())
+			log.Errorf("balance service failed to withdraw: %s", err.Error())
 		} else {
-			log.Debugf("balance service failed: %s", err.Error())
+			log.Debugf("balance service failed to withdraw: %s", err.Error())
 		}
 
 		w.WriteHeader(status)
@@ -201,13 +201,16 @@ func (h *BalanceHandler) ListWithdrawals(w http.ResponseWriter, r *http.Request)
 	if err != nil {
 		status := h.defineResponseStatusByError(err)
 		if status == http.StatusInternalServerError {
-			log.Errorf("balance service failed: %s", err.Error())
+			log.Errorf("balance service failed to list withdrawals: %s", err.Error())
 		} else {
-			log.Debugf("balance service failed: %s", err.Error())
+			log.Debugf("balance service failed to list withdrawals: %s", err.Error())
 		}
-
 		w.WriteHeader(status)
+		return
+	}
 
+	if len(list) == 0 {
+		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 
