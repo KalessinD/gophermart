@@ -1,10 +1,12 @@
-//go:generate mockgen -source=file.go -destination=mocks/mock_persist.go -package=mocks
-package repositories
+//go:generate mockgen -source=json.go -destination=mocks/mock_json_file.go -package=mocks
+package file
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"sync"
 
 	"github.com/KalessinD/gophermart/internal/models"
@@ -17,10 +19,24 @@ type (
 	}
 )
 
-func NewJSONFileStorage(filePath string) PersistStorageInterface {
+func NewJSONFileStorage(filePath string) (PersistStorageInterface, error) {
+	dir := filepath.Dir(filePath)
+
+	info, err := os.Stat(dir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, fmt.Errorf("directory does not exist: %s", dir)
+		}
+		return nil, fmt.Errorf("unable to access directory '%s': %w", dir, err)
+	}
+
+	if !info.IsDir() {
+		return nil, fmt.Errorf("path is not a directory: %s", dir)
+	}
+
 	return &JSONFileStorage{
 		filePath: filePath,
-	}
+	}, nil
 }
 
 func (m *JSONFileStorage) Restore() (models.OrdersList, error) {

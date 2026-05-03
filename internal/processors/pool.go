@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/KalessinD/gophermart/internal/models"
-	"github.com/KalessinD/gophermart/internal/repositories"
+	"github.com/KalessinD/gophermart/internal/repositories/file"
 	"go.uber.org/zap"
 )
 
@@ -23,7 +23,7 @@ type (
 		log          *zap.Logger
 		pendingTasks TaskList      // очередь LIFO на случай, если сотрудникам в спринт новые задачи не получается добавить
 		hasTasks     chan struct{} // канал-будильник для диспетчера, если тот задремал без работы
-		dumper       repositories.PersistStorageInterface
+		dumper       file.PersistStorageInterface
 	}
 
 	// Интерфейс для управления коллективом сотрудников
@@ -42,7 +42,7 @@ func NewQueueProcessor(
 	log *zap.Logger,
 	inCh <-chan *Task,
 	pCh chan time.Duration,
-	dumper repositories.PersistStorageInterface,
+	dumper file.PersistStorageInterface,
 	action TaskProcessor,
 ) (WorkerPoolInterface, error) {
 	pool := &WorkerPool{

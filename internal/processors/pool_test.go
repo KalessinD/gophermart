@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/KalessinD/gophermart/internal/processors"
-	"github.com/KalessinD/gophermart/internal/repositories/mocks"
+	"github.com/KalessinD/gophermart/internal/repositories/file/mocks"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"

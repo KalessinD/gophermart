@@ -10,7 +10,7 @@ import (
 	"github.com/KalessinD/gophermart/internal/clients"
 	handler "github.com/KalessinD/gophermart/internal/handlers"
 	"github.com/KalessinD/gophermart/internal/processors"
-	"github.com/KalessinD/gophermart/internal/repositories"
+	"github.com/KalessinD/gophermart/internal/repositories/file"
 	repository "github.com/KalessinD/gophermart/internal/repositories/postgresql"
 	service "github.com/KalessinD/gophermart/internal/services"
 
@@ -116,13 +116,18 @@ func NewRouter(ctx context.Context, cfg *config.GophermartConfig, log *zap.Logge
 		orderService,
 	)
 
+	dumper, err := file.NewFileStorage(file.AvroType, cfg.DumperStoragePath)
+	if err != nil {
+		return nil, err
+	}
+
 	processor, err := processors.NewQueueProcessor(
 		cfg.QueueWorkers,
 		cfg.QueueBufSize,
 		log,
 		linkCh,
 		pauseCh,
-		repositories.NewJSONFileStorage(cfg.DumperStoragePath),
+		dumper,
 		orderService.ProcessAccrualTask,
 	)
 	if err != nil {

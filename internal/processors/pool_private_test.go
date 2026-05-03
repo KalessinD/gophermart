@@ -9,13 +9,13 @@ import (
 	"time"
 
 	"github.com/KalessinD/gophermart/internal/models"
-	"github.com/KalessinD/gophermart/internal/repositories"
+	"github.com/KalessinD/gophermart/internal/repositories/file"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
 
 // testPoolSetup создает экземпляр WorkerPool для модульного тестирования приватных методов.
-func testPoolSetup(t *testing.T, dumper repositories.PersistStorageInterface) *WorkerPool {
+func testPoolSetup(t *testing.T, dumper file.PersistStorageInterface) *WorkerPool {
 	t.Helper()
 
 	return &WorkerPool{
@@ -62,7 +62,7 @@ func TestWorkerPool_DumpQueue(t *testing.T) {
 	t.Run("saves pending and buffered tasks", func(t *testing.T) {
 		dir := t.TempDir()
 		filePath := filepath.Join(dir, "dump.json")
-		storage := repositories.NewJSONFileStorage(filePath)
+		storage, _ := file.NewJSONFileStorage(filePath)
 
 		wp := testPoolSetup(t, storage)
 
@@ -97,7 +97,7 @@ func TestWorkerPool_RestoreQueue(t *testing.T) {
 	t.Run("restore and erase", func(t *testing.T) {
 		dir := t.TempDir()
 		filePath := filepath.Join(dir, "dump.json")
-		storage := repositories.NewJSONFileStorage(filePath)
+		storage, _ := file.NewJSONFileStorage(filePath)
 
 		ordersToSave := models.OrdersList{
 			{ID: "restore_1"},
@@ -130,7 +130,7 @@ func TestWorkerPool_RestoreQueue(t *testing.T) {
 
 	t.Run("no file no panic", func(t *testing.T) {
 		dir := t.TempDir()
-		storage := repositories.NewJSONFileStorage(filepath.Join(dir, "missing.json"))
+		storage, _ := file.NewJSONFileStorage(filepath.Join(dir, "missing.json"))
 		wp := testPoolSetup(t, storage)
 
 		wp.RestoreQueue()

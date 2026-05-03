@@ -1,4 +1,4 @@
-package repositories_test
+package file_test
 
 import (
 	"encoding/json"
@@ -8,15 +8,16 @@ import (
 	"time"
 
 	"github.com/KalessinD/gophermart/internal/models"
-	"github.com/KalessinD/gophermart/internal/repositories"
+	"github.com/KalessinD/gophermart/internal/repositories/file"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestFileStorage_SaveAndRestore(t *testing.T) {
+func TestJSONStorage_SaveAndRestore(t *testing.T) {
 	tmpDir := t.TempDir()
 	filePath := filepath.Join(tmpDir, "orders.json")
-	storage := repositories.NewJSONFileStorage(filePath)
+	storage, _ := file.NewJSONFileStorage(filePath)
 
 	// Подготовка данных.
 	// Важно: time.Time нужно округлять, так как JSON маршалинг может потерять наносекунды
@@ -68,10 +69,8 @@ func TestFileStorage_SaveAndRestore(t *testing.T) {
 }
 
 func TestFileStorage_Restore_FileNotExists(t *testing.T) {
-	storage := repositories.NewJSONFileStorage("/non/existent/path/orders.json")
-	data, err := storage.Restore()
-	require.NoError(t, err)
-	require.Nil(t, data)
+	_, err := file.NewJSONFileStorage("/non/existent/path/orders.json")
+	assert.Error(t, err, "expects error")
 }
 
 func TestFileStorage_Restore_EmptyFile(t *testing.T) {
@@ -79,7 +78,7 @@ func TestFileStorage_Restore_EmptyFile(t *testing.T) {
 	require.NoError(t, err)
 	defer tmpFile.Close()
 
-	storage := repositories.NewJSONFileStorage(tmpFile.Name())
+	storage, _ := file.NewJSONFileStorage(tmpFile.Name())
 
 	data, err := storage.Restore()
 	require.NoError(t, err)
@@ -92,7 +91,7 @@ func TestFileStorage_Restore_InvalidJSON(t *testing.T) {
 	_, _ = tmpFile.WriteString("not a json")
 	tmpFile.Close()
 
-	storage := repositories.NewJSONFileStorage(tmpFile.Name())
+	storage, _ := file.NewJSONFileStorage(tmpFile.Name())
 
 	_, err = storage.Restore()
 	require.Error(t, err, "Should return error on invalid JSON")
@@ -110,7 +109,7 @@ func TestFileStorage_Erase(t *testing.T) {
 		err := os.WriteFile(filePath, []byte(`[{"id":"1"}]`), 0o600)
 		require.NoError(t, err, "failed to create test file")
 
-		storage := repositories.NewJSONFileStorage(filePath)
+		storage, _ := file.NewJSONFileStorage(filePath)
 
 		err = storage.Erase()
 		require.NoError(t, err, "Erase should not return error for existing file")
@@ -123,7 +122,7 @@ func TestFileStorage_Erase(t *testing.T) {
 		tmpDir := t.TempDir()
 		filePath := filepath.Join(tmpDir, "non_existent.json")
 
-		storage := repositories.NewJSONFileStorage(filePath)
+		storage, _ := file.NewJSONFileStorage(filePath)
 
 		err := storage.Erase()
 
