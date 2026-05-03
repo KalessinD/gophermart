@@ -1,9 +1,32 @@
-1. где хранить баланс и списания? в отдельной таблице?
-2. Поправить Makefile для работы с контейнером gophermart
-3. Добавить параметров для указания всякого при запуске приложения
-4. Написать подробную документацию
+1. Поправить Makefile для работы с контейнером gophermart
+2. Добавить параметров для указания всякого при запуске приложения
+3. Написать подробную документацию
 
 Осталось сделать ручки для тестов:
     --- FAIL: TestGophermart/TestEndToEnd/check_balance (0.00s)
     --- FAIL: TestGophermart/TestEndToEnd/recheck_balance (0.00s)
     --- FAIL: TestGophermart/TestEndToEnd/check_withdrawals (0.00s)
+
+// Интерфейс в сервисе
+type UnitOfWork interface {
+    OrderRepository() OrderRepository
+    UserRepository() UserRepository
+    Commit() error
+}
+
+// Логика в сервисе
+func (s *Service) ProcessOrder(order *models.Order) error {
+    return s.uow.Execute(ctx, func(uow UnitOfWork) error {
+        if err := uow.OrderRepository().Update(order); err != nil {
+            return err
+        }
+        
+        // Бизнес-логика тут
+        if order.Status == models.OrderProcessedStatus && order.Accrual > 0 {
+            if err := uow.UserRepository().AddBalance(order.UserID, order.Accrual); err != nil {
+                return err
+            }
+        }
+        return nil
+    })
+}

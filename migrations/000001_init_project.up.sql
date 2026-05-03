@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS gophermart.users (
     id UUID PRIMARY KEY DEFAULT uuidv7(),
     login varchar(32) NOT NULL,
     hash varchar(128) NOT NULL,
+    balance bigint default 0,
     version integer NOT NULL DEFAULT 0,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
@@ -17,6 +18,7 @@ COMMENT ON TABLE gophermart.users IS 'Таблица пользователей 
 COMMENT ON COLUMN gophermart.users.id IS 'ID пользователя';
 COMMENT ON COLUMN gophermart.users.login IS 'Логин пользователя';
 COMMENT ON COLUMN gophermart.users.hash IS 'Зашифрованный пароль пользователя';
+COMMENT ON COLUMN gophermart.users.balance IS 'Баланс баллов пользователя';
 COMMENT ON COLUMN gophermart.users.version IS 'Версия профиля';
 COMMENT ON COLUMN gophermart.users.created_at IS 'Время создание пользователя';
 

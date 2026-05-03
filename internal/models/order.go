@@ -153,6 +153,10 @@ func (m *Order) converStringAccrualToInt(accrualStr string) (int, error) {
 	return result, nil
 }
 
+func (a *Accrual) Int() int {
+	return int(*a)
+}
+
 // Кастомный маршаллер для переовд денег в копейках строки в строку с рублями и копейками
 func (a Accrual) MarshalJSON() ([]byte, error) {
 	if a == 0 {

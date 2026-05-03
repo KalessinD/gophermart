@@ -16,6 +16,8 @@ const (
 	QueryInsertUser = `INSERT INTO ` + PsqlUserTable + ` AS t (login, hash) VALUES($1, $2) RETURNING id`
 
 	QuerySelectUser = `SELECT id, login, hash, version, created_at FROM ` + PsqlUserTable + ` WHERE login = $1`
+
+	QueryUpdateUserBalance = `UPDATE ` + PsqlUserTable + ` SET balance = balance + $2 WHERE id = $1 RETURNING id`
 )
 
 func (r *SQLStorage) GetUser(ctx context.Context, login string) (*models.User, error) {
@@ -50,6 +52,21 @@ func (r *SQLStorage) addUserTx(ctx context.Context, tx *sql.Tx, user *models.Use
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == pgerrcode.UniqueViolation {
 				return models.ErrUserExists
+			}
+		}
+		return err
+	}
+	return nil
+}
+
+func (r *SQLStorage) updateUserBalanceTx(ctx context.Context, tx *sql.Tx, userID string, diffSum int) error {
+	var updatedUserID string
+	err := tx.QueryRowContext(ctx, QueryUpdateUserBalance, userID, diffSum).Scan(&updatedUserID)
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			if pgErr.Code == pgerrcode.UniqueViolation {
+				return models.ErrOrderExists
 			}
 		}
 		return err
