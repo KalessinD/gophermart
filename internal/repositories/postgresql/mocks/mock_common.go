@@ -69,6 +69,20 @@ func (mr *MockSQLStorageInterfaceMockRecorder) AddUser(ctx, user any) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddUser", reflect.TypeOf((*MockSQLStorageInterface)(nil).AddUser), ctx, user)
 }
 
+// AddWithdrawn mocks base method.
+func (m *MockSQLStorageInterface) AddWithdrawn(ctx context.Context, withdrawn *models.Withdrawn) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddWithdrawn", ctx, withdrawn)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddWithdrawn indicates an expected call of AddWithdrawn.
+func (mr *MockSQLStorageInterfaceMockRecorder) AddWithdrawn(ctx, withdrawn any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddWithdrawn", reflect.TypeOf((*MockSQLStorageInterface)(nil).AddWithdrawn), ctx, withdrawn)
+}
+
 // GetOrder mocks base method.
 func (m *MockSQLStorageInterface) GetOrder(ctx context.Context, orderID, userID string) (*models.Order, error) {
 	m.ctrl.T.Helper()
@@ -99,6 +113,36 @@ func (mr *MockSQLStorageInterfaceMockRecorder) GetUser(ctx, login any) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUser", reflect.TypeOf((*MockSQLStorageInterface)(nil).GetUser), ctx, login)
 }
 
+// GetUserByID mocks base method.
+func (m *MockSQLStorageInterface) GetUserByID(ctx context.Context, userID string) (*models.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserByID", ctx, userID)
+	ret0, _ := ret[0].(*models.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserByID indicates an expected call of GetUserByID.
+func (mr *MockSQLStorageInterfaceMockRecorder) GetUserByID(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByID", reflect.TypeOf((*MockSQLStorageInterface)(nil).GetUserByID), ctx, userID)
+}
+
+// GetWithdrawn mocks base method.
+func (m *MockSQLStorageInterface) GetWithdrawn(ctx context.Context, userID string) (*models.Withdrawn, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetWithdrawn", ctx, userID)
+	ret0, _ := ret[0].(*models.Withdrawn)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetWithdrawn indicates an expected call of GetWithdrawn.
+func (mr *MockSQLStorageInterfaceMockRecorder) GetWithdrawn(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWithdrawn", reflect.TypeOf((*MockSQLStorageInterface)(nil).GetWithdrawn), ctx, userID)
+}
+
 // ListOrders mocks base method.
 func (m *MockSQLStorageInterface) ListOrders(ctx context.Context, userID string) (models.OrdersList, error) {
 	m.ctrl.T.Helper()
@@ -112,6 +156,21 @@ func (m *MockSQLStorageInterface) ListOrders(ctx context.Context, userID string)
 func (mr *MockSQLStorageInterfaceMockRecorder) ListOrders(ctx, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListOrders", reflect.TypeOf((*MockSQLStorageInterface)(nil).ListOrders), ctx, userID)
+}
+
+// ListWithdrawals mocks base method.
+func (m *MockSQLStorageInterface) ListWithdrawals(ctx context.Context, userID string) (models.WithdrawnList, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListWithdrawals", ctx, userID)
+	ret0, _ := ret[0].(models.WithdrawnList)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListWithdrawals indicates an expected call of ListWithdrawals.
+func (mr *MockSQLStorageInterfaceMockRecorder) ListWithdrawals(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListWithdrawals", reflect.TypeOf((*MockSQLStorageInterface)(nil).ListWithdrawals), ctx, userID)
 }
 
 // Ping mocks base method.

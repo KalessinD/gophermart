@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -33,8 +32,6 @@ var (
 )
 
 type (
-	Accrual int // будем хранить целые копейки
-
 	/*
 		Объект пользователя системы
 	*/
@@ -153,6 +150,10 @@ func (m *Order) converStringAccrualToInt(accrualStr string) (int, error) {
 	return result, nil
 }
 
+func (a *Accrual) Int() int {
+	return int(*a)
+}
+
 // Кастомный маршаллер для переовд денег в копейках строки в строку с рублями и копейками
 func (a Accrual) MarshalJSON() ([]byte, error) {
 	if a == 0 {
@@ -182,22 +183,4 @@ func (a Accrual) MarshalJSON() ([]byte, error) {
 	// Собираем результат.
 	result := sign + intPart + "." + fracPart
 	return []byte(result), nil
-}
-
-// UnmarshalJSON реализует интерфейс json.Unmarshaler.
-func (a *Accrual) UnmarshalJSON(data []byte) error {
-	if string(data) == "null" {
-		*a = 0
-		return nil
-	}
-
-	var f float64
-	if err := json.Unmarshal(data, &f); err != nil {
-		return err
-	}
-
-	// Переводим в копейки, округляя до ближайшего целого
-	// math.Round нужен для корректной конвертации 5.005 -> 501 копейка
-	*a = Accrual(math.Round(f * 100))
-	return nil
 }
