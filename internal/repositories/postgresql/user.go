@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"errors"
 
-	model "github.com/KalessinD/gophermart/internal/models"
+	"github.com/KalessinD/gophermart/internal/models"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 )
@@ -18,8 +18,8 @@ const (
 	QuerySelectUser = `SELECT id, login, hash, version, created_at FROM ` + PsqlUserTable + ` WHERE login = $1`
 )
 
-func (r *SQLStorage) GetUser(ctx context.Context, login string) (*model.User, error) {
-	user := &model.User{}
+func (r *SQLStorage) GetUser(ctx context.Context, login string) (*models.User, error) {
+	user := &models.User{}
 
 	_, err := r.withRetry(ctx, func(ctx context.Context) (*sql.Row, error) {
 		row := r.db.QueryRowContext(ctx, QuerySelectUser, login)
@@ -34,7 +34,7 @@ func (r *SQLStorage) GetUser(ctx context.Context, login string) (*model.User, er
 	return user, nil
 }
 
-func (r *SQLStorage) AddUser(ctx context.Context, user *model.User) error {
+func (r *SQLStorage) AddUser(ctx context.Context, user *models.User) error {
 	return r.withTxRetry(ctx, func(tx *sql.Tx) error {
 		if err := r.addUserTx(ctx, tx, user); err != nil {
 			return err
@@ -43,13 +43,13 @@ func (r *SQLStorage) AddUser(ctx context.Context, user *model.User) error {
 	})
 }
 
-func (r *SQLStorage) addUserTx(ctx context.Context, tx *sql.Tx, user *model.User) error {
+func (r *SQLStorage) addUserTx(ctx context.Context, tx *sql.Tx, user *models.User) error {
 	err := tx.QueryRowContext(ctx, QueryInsertUser, user.Login, user.Hash).Scan(&user.ID)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == pgerrcode.UniqueViolation {
-				return model.ErrUserExists
+				return models.ErrUserExists
 			}
 		}
 		return err

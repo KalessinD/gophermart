@@ -66,12 +66,13 @@ GO_COVERAGE_REPORT := $(TMPDIR)/practicum-gophermart-coverage.out
 print_title = $(ECHO) "\033[1;33m$1\033[0m"
 
 .PHONY: all help clean \
-	build build-accrual build-gophermart build-docker \
+	build build-gophermart build-docker \
 	test test-go test-yp-iterations test-yp-custom \
 	lint lint-vet lint-golangci lint-golangci-fix \
 	coverage coverage-html \
 	clone-yp-autotest \
-	start-accrual stop-accrual log-accrual status-accrual \
+	check-binaries \
+#	build-accrual start-accrual stop-accrual status-accrual log-accrual
 	start-gophermart stop-gophermart log-gophermart status-gophermart \
 	start-docker stop-docker \
 	start stop restart status
@@ -96,13 +97,13 @@ clone-yp-autotest: # Clones Yandex.Practicum auto-test from git repository
 		$(GIT) clone $(YP_AUTOTESTS_GIT_URL) $(YP_AUTOTESTS_PATH); \
 	fi
 
-build: build-accrual build-gophermart build-docker # Builds gophermart and accrual binaries
+build: build-gophermart build-docker # Builds gophermart and accrual binaries
 
 build-docker: # Builds docker compose
 	$(NOECHO) $(DOCKER_COMPOSE) -f docker-compose.yml build
 
-build-accrual: # Builds accrual's binary
-	$(NOECHO) $(call print_title,"Building accrual binary")
+#build-accrual: # Builds accrual's binary
+#	$(NOECHO) $(call print_title,"Building accrual binary")
 #	$(NOECHO) $(GO) build -o $(ACCRUAL_BIN) $(ACCRUAL_CMD)
 
 build-gophermart: # Builds gophermart's binary
@@ -191,25 +192,23 @@ start: # Starts the server and the accrual to communicate each other
 	$(NOECHO) $(MAKE) start-docker
 	$(NOECHO) $(SLEEP) 3 # giving some time to start
 	$(NOECHO) $(MAKE) start-gophermart
-	$(NOECHO) $(SLEEP) 3 # giving some time to start
-	$(NOECHO) $(MAKE) start-accrual
+#	$(NOECHO) $(SLEEP) 3 # giving some time to start
+#	$(NOECHO) $(MAKE) start-accrual
 	
 start-docker: # Starts the Docker container with PostgreSQL DB
 	$(NOECHO) $(call print_title,"Starting up the docker compose containers")
 	$(NOECHO) $(DOCKER_COMPOSE) up -d
 
-start-accrual: # Starts the accrual
-	$(NOECHO) $(call print_title,"Starts the accrual")
-	$(NOECHO) if [ -f $(ACCRUAL_PID_FILE) ] && $(KILL) -0 $$(cat $(ACCRUAL_PID_FILE)) 2>/dev/null; then \
-		$(ECHO) "accrual is already running (PID: $$(cat $(ACCRUAL_PID_FILE)))"; \
-		exit 1; \
-	fi
-	$(NOECHO) $(ACCRUAL_BIN) \
-		-a localhost:$(YP_GOPHERMART_PORT) \
-		-p $(YP_POLL_INTERVAL) \
-		-r $(YP_REPORT_INTERVAL) \
-		-k $(YP_KEY) \
-		> $(ACCRUAL_LOG_FILE) 2>&1 & $(ECHO) $$! > $(ACCRUAL_PID_FILE)
+#start-accrual: # Starts the accrual
+#	$(NOECHO) $(call print_title,"Starts the accrual")
+#	$(NOECHO) if [ -f $(ACCRUAL_PID_FILE) ] && $(KILL) -0 $$(cat $(ACCRUAL_PID_FILE)) 2>/dev/null; then \
+#		$(ECHO) "accrual is already running (PID: $$(cat $(ACCRUAL_PID_FILE)))"; \
+#		exit 1; \
+#	fi
+#	$(NOECHO) $(ACCRUAL_BIN) \
+#		-d $(YP_PSQL_DSN) \
+#		-a $(ACCRUAL_HOST):$(ACCRUAL_PORT) \
+#		> $(ACCRUAL_LOG_FILE) 2>&1 & $(ECHO) $$! > $(ACCRUAL_PID_FILE)
 
 start-gophermart: # Starts the gophermart
 	$(NOECHO) $(call print_title,"Starts the gophermart")
@@ -223,22 +222,22 @@ start-gophermart: # Starts the gophermart
 		-r $(ACCRUAL_ADDRESS) \
 		> $(GOPHERMART_LOG_FILE) 2>&1 & $(ECHO) $$! > $(GOPHERMART_PID_FILE)
 
-stop: stop-accrual stop-gophermart stop-docker # Stops the gophermart, the accrual and docker containers
+stop: stop-gophermart stop-docker # Stops the gophermart, the accrual and docker containers
 
 stop-docker: # Stops the Docker container with PostgreSQL DB
 	$(NOECHO) $(call print_title,"Stopping the docker compose containers")
 	$(NOECHO) $(DOCKER_COMPOSE) down
 
-stop-accrual: # Stops the accrual
-	$(NOECHO) $(call print_title,"Stops the accrual")
-	$(NOECHO) if [ -f $(ACCRUAL_PID_FILE) ]; then \
-		PID=$$(cat $(ACCRUAL_PID_FILE)); \
-		$(KILL) $$PID; \
-		$(RM) $(ACCRUAL_PID_FILE); \
-		$(ECHO) "Stopped accrual (PID $$PID)"; \
-	else \
-		$(ECHO) "accrual is not running"; \
-	fi
+#stop-accrual: # Stops the accrual
+#	$(NOECHO) $(call print_title,"Stops the accrual")
+#	$(NOECHO) if [ -f $(ACCRUAL_PID_FILE) ]; then \
+#		PID=$$(cat $(ACCRUAL_PID_FILE)); \
+#		$(KILL) $$PID; \
+#		$(RM) $(ACCRUAL_PID_FILE); \
+#		$(ECHO) "Stopped accrual (PID $$PID)"; \
+#	else \
+#		$(ECHO) "accrual is not running"; \
+#	fi
 
 stop-gophermart: # Stops the gophermart
 	$(NOECHO) $(call print_title,"Stops the gophermart")
@@ -253,20 +252,21 @@ stop-gophermart: # Stops the gophermart
 
 restart: stop start # Restarts services
 
-log-accrual: # Shows log from accrual
-	$(TAIL) -n $(TAIL_LAST_N_LINES) $(ACCRUAL_LOG_FILE)
+#log-accrual: # Shows log from accrual
+#	$(TAIL) -n $(TAIL_LAST_N_LINES) $(ACCRUAL_LOG_FILE)
 
 log-gophermart: # Shows log from gophermart
 	$(TAIL) -n $(TAIL_LAST_N_LINES) $(GOPHERMART_LOG_FILE)
 
-status: status-accrual status-gophermart # Returns the status of gophermart and accrual
+status: status-gophermart # Returns the status of gophermart and accrual
+	$(NOECHO) $(DOCKER_COMPOSE) ps -a
 
-status-accrual: # Returns the status of the accrual
-	$(NOECHO) if [ -f $(ACCRUAL_PID_FILE) ] && $(KILL) -0 $$(cat $(ACCRUAL_PID_FILE)) 2>/dev/null; then \
-		$(ECHO) "accrual is running (PID $$(cat $(ACCRUAL_PID_FILE)))"; \
-	else \
-		$(ECHO) "accrual is stopped"; \
-	fi
+#status-accrual: # Returns the status of the accrual
+#	$(NOECHO) if [ -f $(ACCRUAL_PID_FILE) ] && $(KILL) -0 $$(cat $(ACCRUAL_PID_FILE)) 2>/dev/null; then \
+#		$(ECHO) "accrual is running (PID $$(cat $(ACCRUAL_PID_FILE)))"; \
+#	else \
+#		$(ECHO) "accrual is stopped"; \
+#	fi
 
 status-gophermart: # Returns the status of the gophermart
 	$(NOECHO) if [ -f $(GOPHERMART_PID_FILE) ] && $(KILL) -0 $$(cat $(GOPHERMART_PID_FILE)) 2>/dev/null; then \

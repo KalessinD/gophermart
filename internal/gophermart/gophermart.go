@@ -7,7 +7,10 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/KalessinD/gophermart/internal/clients"
 	handler "github.com/KalessinD/gophermart/internal/handlers"
+	"github.com/KalessinD/gophermart/internal/processors"
+	"github.com/KalessinD/gophermart/internal/repositories/file"
 	repository "github.com/KalessinD/gophermart/internal/repositories/postgresql"
 	service "github.com/KalessinD/gophermart/internal/services"
 
@@ -84,11 +87,11 @@ func GetBaseRouter(cfg *config.GophermartConfig, log *zap.Logger) *chi.Mux {
 	return router
 }
 
-func NewRouter(cfg *config.GophermartConfig, log *zap.Logger, pgdb *sql.DB) (http.Handler, error) {
+func NewRouter(ctx context.Context, cfg *config.GophermartConfig, log *zap.Logger, pgdb *sql.DB) (http.Handler, error) {
 	router := GetBaseRouter(cfg, log)
 
 	commonUserHandler := handler.NewCommonHandler(
-		service.NewCommonAction(
+		service.NewCommonService(
 			repository.NewSQLStorage(pgdb),
 		),
 		service.NewAuthService(cfg.EncryptionKey),
@@ -100,14 +103,50 @@ func NewRouter(cfg *config.GophermartConfig, log *zap.Logger, pgdb *sql.DB) (htt
 		r.Post("/register", commonUserHandler.Register)
 	})
 
-	ordersHandler := handler.NewOrdersHandler(
-		service.NewOrderActions(
-			repository.NewSQLStorage(pgdb),
-		),
+	linkCh := make(chan *processors.Task, cfg.WorkerPoolChanBuffer)
+	pauseCh := make(chan time.Duration, 1)
+
+	orderService := service.NewOrderService(
+		repository.NewSQLStorage(pgdb),
+		clients.NewAccrualClient(cfg.AccrualAddress, cfg.AccrualClientTImeout, log),
+		linkCh,
 	)
 
+	ordersHandler := handler.NewOrdersHandler(
+		orderService,
+	)
+
+	dumper, err := file.NewFileStorage(file.AvroType, cfg.DumperStoragePath)
+	if err != nil {
+		return nil, err
+	}
+
+	processor, err := processors.NewQueueProcessor(
+		cfg.QueueWorkers,
+		cfg.QueueBufSize,
+		log,
+		linkCh,
+		pauseCh,
+		dumper,
+		orderService.ProcessAccrualTask,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// если есть, что восстановить из прошлых задач - восстановим
+	processor.RestoreQueue()
+	processor.Start(ctx)
+
+	go func() {
+		// nolint:revive
+		for range ctx.Done() {
+		}
+		close(linkCh)
+	}()
+
 	balancesHandler := handler.NewBalancesHandler(
-		service.NewBalanceActions(
+		service.NewBalanceService(
 			repository.NewSQLStorage(pgdb),
 		),
 	)

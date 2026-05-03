@@ -16,6 +16,11 @@ const (
 	DefaultGracefullShutdownTimeout time.Duration = 5 * time.Second
 	DefaultPsqlDSN                  string        = ""
 	DefaultAccrualAddress           string        = ""
+	DefaultQueueWorkers             int           = 4
+	DefaultQueueBufSize             int           = 100
+	DefaultWorkerPoolChanBuffer     int           = 32
+	DefaultAccrualClientTImeout     time.Duration = 3 * time.Second
+	DefaultDumperStoragePath        string        = "/tmp/practicum-gophermart-storage.json"
 
 	// got by using `openssl rand -hex 32`
 	DefaultServerEncryptionKey string = "c7f7b4036a3fb58734412433cb7a2ed8dec913c650ef8475f05f5b36422cc18d"
@@ -33,6 +38,11 @@ type (
 		PsqlDSN                  string
 		EncryptionKey            string
 		AccrualAddress           string
+		QueueBufSize             int
+		QueueWorkers             int
+		AccrualClientTImeout     time.Duration
+		WorkerPoolChanBuffer     int
+		DumperStoragePath        string
 	}
 
 	GophermartConfigInterface interface {
@@ -54,6 +64,11 @@ func GetDefaultGophermartConfig() *GophermartConfig {
 		PsqlDSN:                  DefaultPsqlDSN,
 		EncryptionKey:            DefaultServerEncryptionKey,
 		AccrualAddress:           DefaultAccrualAddress,
+		QueueBufSize:             DefaultQueueBufSize,
+		QueueWorkers:             DefaultQueueWorkers,
+		AccrualClientTImeout:     DefaultAccrualClientTImeout,
+		WorkerPoolChanBuffer:     DefaultWorkerPoolChanBuffer,
+		DumperStoragePath:        DefaultDumperStoragePath,
 	}
 }
 

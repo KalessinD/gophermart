@@ -11,7 +11,7 @@ import (
 
 type (
 	BalanceHandler struct {
-		balanceService service.OrderActionsInterface
+		balanceService service.OrderServiceInterface
 	}
 
 	BalanceHandlerInterface interface {
@@ -24,7 +24,7 @@ type (
 /*
 Конструктор для хендлеров работающих с балансами
 */
-func NewBalancesHandler(balanceService service.OrderActionsInterface) BalanceHandlerInterface {
+func NewBalancesHandler(balanceService service.OrderServiceInterface) BalanceHandlerInterface {
 	return &BalanceHandler{
 		balanceService: balanceService,
 	}

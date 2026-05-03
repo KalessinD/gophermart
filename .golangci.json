@@ -74,10 +74,24 @@
       "rules": [
         {
           "linters": [
+            "testpackage"
+          ],
+          "path": "internal/processors/pool_private_test.go",
+          "text": "package should be `processors_test` instead of `processors`"
+        },
+        {
+          "linters": [
             "gosec"
           ],
           "path": "internal/models/user.go",
           "text": "G117: Marshaled struct field \"Password\""
+        },
+        {
+          "linters": [
+            "unparam"
+          ],
+          "path": "internal/repositories/postgresql/common.go",
+          "text": "withRetry - result 0 .*sql.Row.* is never used"
         }
       ]      
     },

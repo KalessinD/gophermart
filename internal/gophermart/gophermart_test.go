@@ -40,7 +40,7 @@ func TestNewRouter(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	handler, err := gophermart.NewRouter(cfg, log, db)
+	handler, err := gophermart.NewRouter(t.Context(), cfg, log, db)
 	require.NoError(t, err)
 	assert.NotNil(t, handler)
 
