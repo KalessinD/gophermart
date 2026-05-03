@@ -110,8 +110,8 @@ func TestSQLStorage_GetUser(t *testing.T) {
 		login := "testuser"
 		createdAt := time.Now().Truncate(time.Microsecond) // Truncate для сравнения
 
-		rows := sqlmock.NewRows([]string{"id", "login", "hash", "version", "created_at"}).
-			AddRow(1, login, "hashed_password", 1, createdAt)
+		rows := sqlmock.NewRows([]string{"id", "login", "hash", "version", "balance", "created_at"}).
+			AddRow(1, login, "hashed_password", 1, 0, createdAt)
 
 		mock.ExpectQuery("SELECT").
 			WithArgs(login).
@@ -153,8 +153,8 @@ func TestSQLStorage_GetUser(t *testing.T) {
 			WillReturnError(pgErr)
 
 		// Вторая попытка - успех
-		rows := sqlmock.NewRows([]string{"id", "login", "hash", "version", "created_at"}).
-			AddRow(2, login, "hash_retry", 1, time.Now())
+		rows := sqlmock.NewRows([]string{"id", "login", "hash", "version", "balance", "created_at"}).
+			AddRow(2, login, "hash_retry", 1, 0, time.Now())
 		mock.ExpectQuery("SELECT").
 			WithArgs(login).
 			WillReturnRows(rows)

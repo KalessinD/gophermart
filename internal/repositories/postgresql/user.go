@@ -15,17 +15,34 @@ const (
 
 	QueryInsertUser = `INSERT INTO ` + PsqlUserTable + ` AS t (login, hash) VALUES($1, $2) RETURNING id`
 
-	QuerySelectUser = `SELECT id, login, hash, version, created_at FROM ` + PsqlUserTable + ` WHERE login = $1`
+	QuerySelectUserByLogin = `SELECT id, login, hash, version, balance, created_at FROM ` + PsqlUserTable + ` WHERE login = $1`
+	QuerySelectUserByID    = `SELECT id, login, hash, version, balance, created_at FROM ` + PsqlUserTable + ` WHERE id = $1`
 
-	QueryUpdateUserBalance = `UPDATE ` + PsqlUserTable + ` SET balance = balance + $2 WHERE id = $1 RETURNING id`
+	QueryUpdateUserBalance = `UPDATE ` + PsqlUserTable + ` SET balance = balance + $2 WHERE id = $1 AND (balance + $2) > 0 RETURNING id`
 )
 
 func (r *SQLStorage) GetUser(ctx context.Context, login string) (*models.User, error) {
 	user := &models.User{}
 
 	_, err := r.withRetry(ctx, func(ctx context.Context) (*sql.Row, error) {
-		row := r.db.QueryRowContext(ctx, QuerySelectUser, login)
-		if err := row.Scan(&user.ID, &user.Login, &user.Hash, &user.Version, &user.CreatedAt); err != nil {
+		row := r.db.QueryRowContext(ctx, QuerySelectUserByLogin, login)
+		if err := row.Scan(&user.ID, &user.Login, &user.Hash, &user.Version, &user.Balance, &user.CreatedAt); err != nil {
+			return nil, err
+		}
+		return row, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+func (r *SQLStorage) GetUserByID(ctx context.Context, userID string) (*models.User, error) {
+	user := &models.User{}
+
+	_, err := r.withRetry(ctx, func(ctx context.Context) (*sql.Row, error) {
+		row := r.db.QueryRowContext(ctx, QuerySelectUserByID, userID)
+		if err := row.Scan(&user.ID, &user.Login, &user.Hash, &user.Version, &user.Balance, &user.CreatedAt); err != nil {
 			return nil, err
 		}
 		return row, nil
@@ -63,13 +80,10 @@ func (r *SQLStorage) updateUserBalanceTx(ctx context.Context, tx *sql.Tx, userID
 	var updatedUserID string
 	err := tx.QueryRowContext(ctx, QueryUpdateUserBalance, userID, diffSum).Scan(&updatedUserID)
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
-			if pgErr.Code == pgerrcode.UniqueViolation {
-				return models.ErrOrderExists
-			}
-		}
 		return err
+	}
+	if updatedUserID == "" {
+		return models.ErrUserBalanceIsNotEnough
 	}
 	return nil
 }

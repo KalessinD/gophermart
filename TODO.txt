@@ -3,8 +3,6 @@
 3. Написать подробную документацию
 
 Осталось сделать ручки для тестов:
-    --- FAIL: TestGophermart/TestEndToEnd/check_balance (0.00s)
-    --- FAIL: TestGophermart/TestEndToEnd/recheck_balance (0.00s)
     --- FAIL: TestGophermart/TestEndToEnd/check_withdrawals (0.00s)
 
 // Интерфейс в сервисе

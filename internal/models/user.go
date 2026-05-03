@@ -18,6 +18,7 @@ var (
 	ErrUserExists              = errors.New("user exists")
 	ErrUserWrongLoginLength    = fmt.Errorf("login length should be at least %d characters", MinLoginLength)
 	ErrUserWrongPasswordLength = fmt.Errorf("password length should be at least %d characters", MinPasswordLength)
+	ErrUserBalanceIsNotEnough  = errors.New("user balance is not enough")
 )
 
 type (
@@ -29,6 +30,7 @@ type (
 		Login     string    `json:"login"`
 		Password  string    `json:"password"`
 		Hash      string    `json:"-"`
+		Balance   Accrual   `json:"-"`
 		Version   int       `json:"version"`
 		CreatedAt time.Time `json:"created,omitempty"`
 	}
