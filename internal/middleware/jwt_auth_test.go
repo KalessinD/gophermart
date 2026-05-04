@@ -58,7 +58,7 @@ func TestAuthMiddleware(t *testing.T) {
 	})
 
 	// Создаем мидлварь с тестовым секретом
-	authMiddleware := middleware.AuthMiddleware(testSecret)
+	authMiddleware := middleware.JWTAuth(testSecret)
 	handlerToTest := authMiddleware(nextHandler)
 
 	tests := []struct {

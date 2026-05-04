@@ -81,7 +81,7 @@ func GetBaseRouter(cfg *config.GophermartConfig, log *zap.Logger) *chi.Mux {
 
 	router.Use(middleware.RequestID)
 	router.Use(middleware.Recoverer)
-	router.Use(mw.LoggerMiddleware(log))
+	router.Use(mw.Logger(log))
 	router.Use(middleware.Timeout(cfg.ProcessingTimeout))
 
 	return router
@@ -153,13 +153,19 @@ func NewRouter(ctx context.Context, cfg *config.GophermartConfig, log *zap.Logge
 
 	// JWT Auth
 	router.Group(func(r chi.Router) {
-		r.Use(mw.AuthMiddleware(cfg.EncryptionKey))
+		r.Use(mw.JWTAuth(cfg.EncryptionKey))
 
 		r.Post("/api/user/orders", ordersHandler.AddOrder)
-		r.Get("/api/user/orders", ordersHandler.ListOrders)
 		r.Get("/api/user/balance", balancesHandler.GetLoyalityBalance)
 		r.Post("/api/user/balance/withdraw", balancesHandler.WithdrawBalance)
-		r.Get("/api/user/withdrawals", balancesHandler.ListWithdrawals)
+
+		// Gzip
+		r.Group(func(r2 chi.Router) {
+			r2.Use(mw.Compression(100))
+
+			r2.Get("/api/user/orders", ordersHandler.ListOrders)
+			r2.Get("/api/user/withdrawals", balancesHandler.ListWithdrawals)
+		})
 	})
 
 	return router, nil
