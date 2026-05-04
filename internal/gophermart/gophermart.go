@@ -161,7 +161,7 @@ func NewRouter(ctx context.Context, cfg *config.GophermartConfig, log *zap.Logge
 
 		// Gzip
 		r.Group(func(r2 chi.Router) {
-			r2.Use(mw.Compression(100))
+			r2.Use(mw.Compression(cfg.CompressionThreshold))
 
 			r2.Get("/api/user/orders", ordersHandler.ListOrders)
 			r2.Get("/api/user/withdrawals", balancesHandler.ListWithdrawals)

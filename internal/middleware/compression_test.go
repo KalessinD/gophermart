@@ -15,6 +15,8 @@ import (
 	"github.com/KalessinD/gophermart/internal/middleware"
 )
 
+var compressionThreshold = 1
+
 func simpleHandler(t *testing.T) http.Handler {
 	t.Helper()
 
@@ -39,7 +41,7 @@ func TestCompression_DecodeRequest(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 
-	handler := middleware.Compression(simpleHandler(t))
+	handler := middleware.Compression(compressionThreshold)(simpleHandler(t))
 	handler.ServeHTTP(rec, req)
 
 	res := rec.Result()
@@ -61,7 +63,7 @@ func TestCompression_EncodeResponse(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 
-	handler := middleware.Compression(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+	handler := middleware.Compression(compressionThreshold)(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
 		_, _ = w.Write([]byte(originalBody))
 	}))
@@ -89,7 +91,7 @@ func TestCompression_NoCompression(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 
-	handler := middleware.Compression(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := middleware.Compression(compressionThreshold)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, _ := io.ReadAll(r.Body)
 		_, _ = w.Write(body)
 	}))
@@ -112,7 +114,7 @@ func TestCompression_BadGzipRequest(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 
-	handler := middleware.Compression(simpleHandler(t))
+	handler := middleware.Compression(compressionThreshold)(simpleHandler(t))
 	handler.ServeHTTP(rec, req)
 
 	res := rec.Result()
@@ -127,7 +129,7 @@ func TestCompression_WriteHeader(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 
-	handler := middleware.Compression(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+	handler := middleware.Compression(compressionThreshold)(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusCreated) // 201
 		_, _ = w.Write([]byte("created"))
 	}))
