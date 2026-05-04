@@ -32,6 +32,9 @@ func (r *SQLStorage) GetUser(ctx context.Context, login string) (*models.User, e
 		return row, nil
 	})
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, models.ErrUserNotFound
+		}
 		return nil, err
 	}
 	return user, nil

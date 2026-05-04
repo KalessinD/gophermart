@@ -11,7 +11,7 @@ import (
 	"github.com/KalessinD/gophermart/internal/models"
 	"github.com/KalessinD/gophermart/internal/repositories/postgresql"
 	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/postgres"
+	mpg "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/stretchr/testify/assert"
@@ -39,7 +39,7 @@ func (s *UserE2ETestSuite) SetupSuite() {
 
 	// Запускаем Docker-контейнер с PostgreSQL
 	s.container, err = postgres.Run(s.ctx,
-		"postgres:16-alpine", // Образ Docker
+		"postgres:18-alpine",
 		postgres.WithDatabase("gophermart_test"),
 		postgres.WithUsername("postgres"),
 		postgres.WithPassword("postgres"),
@@ -61,23 +61,18 @@ func (s *UserE2ETestSuite) SetupSuite() {
 	err = s.db.PingContext(s.ctx)
 	require.NoError(s.T(), err, "Failed to ping DB")
 
-	// Применяем миграции
 	// путь к миграциям указывается относительно того, откуда запускаются тесты.
-	s.applyMigrations("file://migrations")
+	s.applyMigrations("file://../../../migrations")
 
 	s.storage = postgresql.NewSQLStorage(s.db)
 }
 
 // applyMigrations применяет схемы к базе
 func (s *UserE2ETestSuite) applyMigrations(sourceURL string) {
-	driver, err := postgres.WithInstance(s.db, &postgres.Config{})
+	driver, err := mpg.WithInstance(s.db, &mpg.Config{})
 	require.NoError(s.T(), err, "Failed to create migrate driver")
 
-	m, err := migrate.NewWithDatabaseInstance(
-		sourceURL,
-		"gophermart_test", // dbname
-		driver,
-	)
+	m, err := migrate.NewWithDatabaseInstance(sourceURL, "gophermart_test", driver)
 	require.NoError(s.T(), err, "Failed to create migrate instance")
 
 	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
@@ -97,7 +92,6 @@ func (s *UserE2ETestSuite) TearDownSuite() {
 	}
 }
 
-// SetupTest запускается перед КАЖДЫМ тестом. Чистим данные.
 func (s *UserE2ETestSuite) SetupTest() {
 	_, err := s.db.ExecContext(s.ctx, "TRUNCATE TABLE gophermart.users CASCADE")
 	require.NoError(s.T(), err, "Failed to truncate users")

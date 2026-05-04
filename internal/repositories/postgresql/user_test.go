@@ -139,7 +139,7 @@ func TestSQLStorage_GetUser(t *testing.T) {
 		user, err := storage.GetUser(context.Background(), login)
 		require.Error(t, err)
 		assert.Nil(t, user)
-		assert.ErrorIs(t, err, sql.ErrNoRows)
+		assert.ErrorIs(t, err, models.ErrUserNotFound)
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 
