@@ -67,7 +67,7 @@ print_title = $(ECHO) "\033[1;33m$1\033[0m"
 
 .PHONY: all help clean \
 	build build-gophermart build-docker \
-	test test-go test-yp-iterations test-yp-custom \
+	test test-go test-e2e test-yp-iterations test-yp-custom \
 	lint lint-vet lint-golangci lint-golangci-fix \
 	coverage coverage-html \
 	clone-yp-autotest \
@@ -139,12 +139,16 @@ check-binaries: # Checks the existance of required binaries
 		exit 1; \
 	fi
 
-test: test-go test-yp # Runs tests
+test: test-go test-e2e test-yp # Runs tests
 
 test-go: # Runs golang tests
 	$(NOECHO) $(call print_title,"Running tests: golang")
 	$(NOECHO) $(GO) clean -testcache
 	$(NOECHO) $(GO) test -buildvcs=false -v -race -cover ./...
+
+test-e2e: # Runs end2end tests
+	$(NOECHO) $(call print_title,"Running e2e tests")
+	$(NOECHO) $(GO) test -buildvcs=false -v -tags=e2e ./tests/...
 
 test-yp: check-binaries stop start
 	$(NOECHO) $(call print_title,"Running Yandex.Practicum tests")
