@@ -16,7 +16,7 @@ YP_GOPHERMART_TEST ?= $(HOME)/bin/gophermarttest
 YP_CUSTOM_TEST ?= ""
 YP_PSQL_DSN ?= ""
 
-GO_PACKAGES := $(shell go list ./... | grep -v '/mocks')
+GO_PACKAGES := $(shell go list ./... | grep -vE '/mocks|/e2e')
 OS := $(shell uname -s | tr '[:upper:]' '[:lower:]')
 
 ifeq ($(OS),darwin)
