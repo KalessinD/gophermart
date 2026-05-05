@@ -44,7 +44,7 @@ func (s *OrdersE2ETestSuite) SetupTest() {
 	s.PostgresSuite.SetupTest([]string{
 		"gophermart.users",
 		"gophermart.orders",
-		"gophermart.withdrawns",
+		"gophermart.withdrawals",
 	})
 }
 
