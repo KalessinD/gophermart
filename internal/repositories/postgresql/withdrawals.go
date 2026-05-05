@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	PsqlWithdrawnTable = `"` + PsqlGophermartSchema + `"."withdrawns"`
+	PsqlWithdrawnTable = `"` + PsqlGophermartSchema + `"."withdrawals"`
 
 	QueryInsertWithdrawn = `INSERT INTO ` + PsqlWithdrawnTable + ` AS t (user_id, order_id, withdrawn) VALUES($1, $2, $3) RETURNING id`
 
