@@ -75,10 +75,6 @@ jobs:
           (cd cmd/gophermart && go build -buildvcs=false -o gophermart)
           (cd cmd/accrual && chmod +x accrual_linux_amd64)
 
-      - name: Build Gophermart binary
-        run: |
-          make build-gophermart
-
       - name: Project Tests
         run: |
           make test-go
