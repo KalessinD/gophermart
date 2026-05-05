@@ -38,9 +38,9 @@ type (
 		ListOrders(ctx context.Context, userID string) (models.OrdersList, error)
 		UpdateOrder(ctx context.Context, order *models.Order) error
 
-		AddWithdrawn(ctx context.Context, withdrawn *models.Withdrawn) error
-		GetWithdrawn(ctx context.Context, userID string) (*models.Withdrawn, error)
-		ListWithdrawals(ctx context.Context, userID string) (models.WithdrawnList, error)
+		AddWithdrawn(ctx context.Context, withdrawn *models.Withdrawal) error
+		GetWithdrawn(ctx context.Context, userID string) (*models.Withdrawal, error)
+		ListWithdrawals(ctx context.Context, userID string) (models.WithdrawalsList, error)
 
 		Ping(ctx context.Context) error
 	}

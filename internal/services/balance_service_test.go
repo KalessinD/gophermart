@@ -38,7 +38,7 @@ func TestBalanceService_GetBalanceInfo(t *testing.T) {
 			ID:      userID,
 			Balance: 1000, // 10.00
 		}
-		withdrawn := &models.Withdrawn{
+		withdrawn := &models.Withdrawal{
 			Sum: 500, // 5.00
 		}
 
@@ -95,14 +95,14 @@ func TestBalanceService_Withdraw(t *testing.T) {
 		ctx = setClaimsToCtx(ctx, t, userID)
 
 		// Валидный номер по Луну (пример: 49927398716)
-		withdrawn := &models.Withdrawn{
+		withdrawn := &models.Withdrawal{
 			ID:  "49927398716",
 			Sum: 100,
 		}
 
 		// Ожидаем, что UserID будет проставлен из контекста
 		mockDB.EXPECT().AddWithdrawn(gomock.Any(), gomock.Cond(func(x any) bool {
-			w, ok := x.(*models.Withdrawn)
+			w, ok := x.(*models.Withdrawal)
 			if !ok {
 				return false
 			}
@@ -118,7 +118,7 @@ func TestBalanceService_Withdraw(t *testing.T) {
 		userID := UserID
 		ctx = setClaimsToCtx(ctx, t, userID)
 
-		withdrawn := &models.Withdrawn{
+		withdrawn := &models.Withdrawal{
 			ID:  "12345", // Невалидный номер
 			Sum: 100,
 		}
@@ -133,7 +133,7 @@ func TestBalanceService_Withdraw(t *testing.T) {
 		userID := UserID
 		ctx = setClaimsToCtx(ctx, t, userID)
 
-		withdrawn := &models.Withdrawn{
+		withdrawn := &models.Withdrawal{
 			ID:  "49927398716", // Валидный
 			Sum: 100,
 		}
@@ -158,7 +158,7 @@ func TestBalanceService_ListWithdrawals(t *testing.T) {
 		userID := UserID
 		ctx = setClaimsToCtx(ctx, t, userID)
 
-		expectedList := models.WithdrawnList{
+		expectedList := models.WithdrawalsList{
 			{ID: "order1", Sum: 100},
 			{ID: "order2", Sum: 200},
 		}
@@ -175,7 +175,7 @@ func TestBalanceService_ListWithdrawals(t *testing.T) {
 		userID := "user-2"
 		ctx = setClaimsToCtx(ctx, t, userID)
 
-		mockDB.EXPECT().ListWithdrawals(gomock.Any(), userID).Return(models.WithdrawnList{}, nil)
+		mockDB.EXPECT().ListWithdrawals(gomock.Any(), userID).Return(models.WithdrawalsList{}, nil)
 
 		list, err := service.ListWithdrawals(ctx)
 		require.NoError(t, err)

@@ -57,10 +57,10 @@ func (mr *MockBalanceServiceInterfaceMockRecorder) GetBalanceInfo(ctx any) *gomo
 }
 
 // ListWithdrawals mocks base method.
-func (m *MockBalanceServiceInterface) ListWithdrawals(ctx context.Context) (models.WithdrawnList, error) {
+func (m *MockBalanceServiceInterface) ListWithdrawals(ctx context.Context) (models.WithdrawalsList, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListWithdrawals", ctx)
-	ret0, _ := ret[0].(models.WithdrawnList)
+	ret0, _ := ret[0].(models.WithdrawalsList)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -72,7 +72,7 @@ func (mr *MockBalanceServiceInterfaceMockRecorder) ListWithdrawals(ctx any) *gom
 }
 
 // Withdraw mocks base method.
-func (m *MockBalanceServiceInterface) Withdraw(ctx context.Context, withdrawn *models.Withdrawn) error {
+func (m *MockBalanceServiceInterface) Withdraw(ctx context.Context, withdrawn *models.Withdrawal) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Withdraw", ctx, withdrawn)
 	ret0, _ := ret[0].(error)

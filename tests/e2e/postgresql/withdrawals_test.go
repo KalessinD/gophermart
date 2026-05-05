@@ -51,7 +51,7 @@ func (s *WithdrawnE2ETestSuite) TestAddAndGetWithdrawn() {
 	_, err = s.DB.ExecContext(s.Ctx, "UPDATE gophermart.users SET balance = 1000 WHERE id = $1", user.ID)
 	require.NoError(s.T(), err, "Failed to set balance")
 
-	wd := &models.Withdrawn{
+	wd := &models.Withdrawal{
 		UserID:  user.ID,
 		OrderID: "12345678903", // Валидный номер по Луну
 		Sum:     500,           // Списываем 5.00
@@ -86,8 +86,8 @@ func (s *WithdrawnE2ETestSuite) TestListWithdrawals() {
 	require.NoError(s.T(), err)
 
 	// Создаем несколько списаний
-	wd1 := &models.Withdrawn{UserID: user.ID, OrderID: "12345678903", Sum: 100}
-	wd2 := &models.Withdrawn{UserID: user.ID, OrderID: "12345678904", Sum: 200}
+	wd1 := &models.Withdrawal{UserID: user.ID, OrderID: "12345678903", Sum: 100}
+	wd2 := &models.Withdrawal{UserID: user.ID, OrderID: "12345678904", Sum: 200}
 
 	err = s.storage.AddWithdrawn(s.Ctx, wd1)
 	require.NoError(s.T(), err)
@@ -119,7 +119,7 @@ func (s *WithdrawnE2ETestSuite) TestAddWithdrawn_InsufficientFunds() {
 	err := s.storage.AddUser(s.Ctx, user)
 	require.NoError(s.T(), err)
 
-	wd := &models.Withdrawn{
+	wd := &models.Withdrawal{
 		UserID:  user.ID,
 		OrderID: "12345678905",
 		Sum:     100,

@@ -24,8 +24,8 @@ type (
 	*/
 	BalanceServiceInterface interface {
 		GetBalanceInfo(ctx context.Context) (*models.Balance, error)
-		Withdraw(ctx context.Context, withdrawn *models.Withdrawn) error
-		ListWithdrawals(ctx context.Context) (models.WithdrawnList, error)
+		Withdraw(ctx context.Context, withdrawn *models.Withdrawal) error
+		ListWithdrawals(ctx context.Context) (models.WithdrawalsList, error)
 	}
 )
 
@@ -64,7 +64,7 @@ func (s *BalanceService) GetBalanceInfo(ctx context.Context) (*models.Balance, e
 
 // Списывает с баланса пользователя.
 // Может вернуть ошибку
-func (s *BalanceService) Withdraw(ctx context.Context, withdrawn *models.Withdrawn) error {
+func (s *BalanceService) Withdraw(ctx context.Context, withdrawn *models.Withdrawal) error {
 	if !alg.IsValidLuhn(withdrawn.ID) {
 		return models.ErrOrderWrongFormat
 	}
@@ -75,7 +75,7 @@ func (s *BalanceService) Withdraw(ctx context.Context, withdrawn *models.Withdra
 	return s.db.AddWithdrawn(ctx, withdrawn)
 }
 
-func (s *BalanceService) ListWithdrawals(ctx context.Context) (models.WithdrawnList, error) {
+func (s *BalanceService) ListWithdrawals(ctx context.Context) (models.WithdrawalsList, error) {
 	claims := middleware.GetClaims(ctx)
 	list, err := s.db.ListWithdrawals(ctx, claims.UserID)
 	if err != nil {

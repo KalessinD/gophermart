@@ -7,7 +7,7 @@ import (
 )
 
 type (
-	Withdrawn struct {
+	Withdrawal struct {
 		ID          string    `json:"-"`
 		UserID      string    `json:"-"`
 		OrderID     string    `json:"order"`
@@ -15,7 +15,7 @@ type (
 		ProcessedAt time.Time `json:"processed_at"`
 	}
 
-	WithdrawnList []*Withdrawn
+	WithdrawalsList []*Withdrawal
 )
 
 var ErrWithdrawnNotFound = errors.New("withdrawns not found")
@@ -24,6 +24,6 @@ var ErrWithdrawnNotFound = errors.New("withdrawns not found")
 Сериализует объект списания баллов в строку JSON
 Может вернуть ошибку, коли та случится.
 */
-func (m *Withdrawn) ToJSON() ([]byte, error) {
+func (m *Withdrawal) ToJSON() ([]byte, error) {
 	return json.Marshal(m)
 }

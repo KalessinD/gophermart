@@ -18,8 +18,8 @@ const (
 	QuerySelectWithdrawnList = `SELECT id, user_id, order_id, withdrawn, processed_at FROM ` + PsqlWithdrawnTable + ` WHERE user_id = $1`
 )
 
-func (r *SQLStorage) GetWithdrawn(ctx context.Context, userID string) (*models.Withdrawn, error) {
-	wd := &models.Withdrawn{}
+func (r *SQLStorage) GetWithdrawn(ctx context.Context, userID string) (*models.Withdrawal, error) {
+	wd := &models.Withdrawal{}
 
 	_, err := r.withRetry(ctx, func(ctx context.Context) (*sql.Row, error) {
 		row := r.db.QueryRowContext(ctx, QuerySelectWithdrawn, userID)
@@ -37,7 +37,7 @@ func (r *SQLStorage) GetWithdrawn(ctx context.Context, userID string) (*models.W
 	return wd, nil
 }
 
-func (r *SQLStorage) ListWithdrawals(ctx context.Context, userID string) (models.WithdrawnList, error) {
+func (r *SQLStorage) ListWithdrawals(ctx context.Context, userID string) (models.WithdrawalsList, error) {
 	rows, err := r.db.QueryContext(ctx, QuerySelectWithdrawnList, userID)
 	if err != nil {
 		return nil, err
@@ -45,10 +45,10 @@ func (r *SQLStorage) ListWithdrawals(ctx context.Context, userID string) (models
 
 	defer rows.Close()
 
-	wds := make(models.WithdrawnList, 0, 100)
+	wds := make(models.WithdrawalsList, 0, 100)
 
 	for rows.Next() {
-		wd := &models.Withdrawn{}
+		wd := &models.Withdrawal{}
 		err = rows.Scan(&wd.ID, &wd.UserID, &wd.OrderID, &wd.Sum, &wd.ProcessedAt)
 
 		if err == nil {
@@ -61,7 +61,7 @@ func (r *SQLStorage) ListWithdrawals(ctx context.Context, userID string) (models
 	return wds, nil
 }
 
-func (r *SQLStorage) AddWithdrawn(ctx context.Context, withdrawn *models.Withdrawn) error {
+func (r *SQLStorage) AddWithdrawn(ctx context.Context, withdrawn *models.Withdrawal) error {
 	return r.withTxRetry(ctx, func(tx *sql.Tx) error {
 		if err := r.addWithdrawnTx(ctx, tx, withdrawn); err != nil {
 			return err
@@ -73,7 +73,7 @@ func (r *SQLStorage) AddWithdrawn(ctx context.Context, withdrawn *models.Withdra
 	})
 }
 
-func (r *SQLStorage) addWithdrawnTx(ctx context.Context, tx *sql.Tx, wd *models.Withdrawn) error {
+func (r *SQLStorage) addWithdrawnTx(ctx context.Context, tx *sql.Tx, wd *models.Withdrawal) error {
 	err := tx.QueryRowContext(ctx, QueryInsertWithdrawn, wd.UserID, wd.OrderID, wd.Sum).Scan(&wd.ID)
 	if err != nil {
 		return err
