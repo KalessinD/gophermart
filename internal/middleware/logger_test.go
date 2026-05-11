@@ -199,7 +199,7 @@ func TestMiddleware(t *testing.T) {
 	// Проверяем наличие и значение ключевых полей
 	tests := []struct {
 		key      string
-		expected interface{}
+		expected any
 	}{
 		{"request_id", reqID},
 		{"method", http.MethodPost},
