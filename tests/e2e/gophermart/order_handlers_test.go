@@ -231,7 +231,7 @@ func (s *OrdersE2ETestSuite) TestListOrders_Empty() {
 
 	// Если 200 - проверим что массив пустой
 	if resp.StatusCode == http.StatusOK {
-		var orders []interface{}
+		var orders []any
 		body, _ := io.ReadAll(resp.Body)
 		json.Unmarshal(body, &orders)
 		assert.Empty(s.T(), orders)
