@@ -133,5 +133,5 @@ YP_CUSTOM_TEST="TestGophermart/TestEndToEnd" make test-yp-custom
 - [Техническое задание](SPECIFICATION.md).
 
 ## Групповой проект
-- [Репозиторий](https://github.com/yandex-praktikum/go-musthave-diploma-tpl).
+- [Репозиторий](https://github.com/yandex-praktikum/go-musthave-group-diploma-tpl).
 - [Техническое задание](SPECIFICATION-FULL.md).
