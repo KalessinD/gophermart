@@ -3,7 +3,6 @@
 package gophermart_test
 
 import (
-	"bytes"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -12,7 +11,6 @@ import (
 	"testing"
 
 	"github.com/KalessinD/gophermart/internal/gophermart"
-	"github.com/KalessinD/gophermart/internal/models"
 	"github.com/KalessinD/gophermart/tests/e2e/fixtures"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -52,42 +50,8 @@ func TestOrdersE2ETestSuite(t *testing.T) {
 	suite.Run(t, new(OrdersE2ETestSuite))
 }
 
-// authUser регистрирует и логинит пользователя, возвращая куку для авторизации
-func (s *OrdersE2ETestSuite) authUser(login, password string) *http.Cookie {
-	user := models.User{Login: login, Password: password}
-	body, _ := json.Marshal(user)
-
-	resp, err := http.Post(s.server.URL+"/api/user/register", "application/json", bytes.NewReader(body))
-	require.NoError(s.T(), err)
-	io.Copy(io.Discard, resp.Body)
-	resp.Body.Close()
-	require.Equal(s.T(), http.StatusOK, resp.StatusCode)
-
-	for _, c := range resp.Cookies() {
-		if c.Name == "token" {
-			return c
-		}
-	}
-
-	// если куку с авторизацией не нашли
-	resp, err = http.Post(s.server.URL+"/api/user/login", "application/json", bytes.NewReader(body))
-	require.NoError(s.T(), err)
-	defer resp.Body.Close()
-
-	for _, c := range resp.Cookies() {
-		if c.Name == "token" {
-			return c
-		}
-	}
-
-	require.Fail(s.T(), "Auth cookie not found")
-	return nil
-}
-
-// --- Тесты ---
-
 func (s *OrdersE2ETestSuite) TestAddOrder_Success() {
-	cookie := s.authUser("user1", "password123")
+	cookie := fixtures.AuthUser(s.T(), s.server, "user1", "password123")
 
 	// Валидный номер по Луну
 	orderNumber := "12345678903"
@@ -105,7 +69,7 @@ func (s *OrdersE2ETestSuite) TestAddOrder_Success() {
 }
 
 func (s *OrdersE2ETestSuite) TestAddOrder_AlreadyUploadedBySameUser() {
-	cookie := s.authUser("user2", "password123")
+	cookie := fixtures.AuthUser(s.T(), s.server, "user2", "password123")
 	orderNumber := "12345678903"
 
 	// Первый раз загружаем
@@ -132,7 +96,7 @@ func (s *OrdersE2ETestSuite) TestAddOrder_AlreadyUploadedBySameUser() {
 }
 
 func (s *OrdersE2ETestSuite) TestAddOrder_ConflictOtherUser() {
-	cookie1 := s.authUser("user3", "password123")
+	cookie1 := fixtures.AuthUser(s.T(), s.server, "user3", "password123")
 	orderNumber := "49927398716" // Валидный номер
 
 	req1, _ := http.NewRequest(http.MethodPost, s.server.URL+"/api/user/orders", strings.NewReader(orderNumber))
@@ -144,7 +108,7 @@ func (s *OrdersE2ETestSuite) TestAddOrder_ConflictOtherUser() {
 	resp1.Body.Close()
 
 	// Кто-то ещё пытается передать такой же заказ
-	cookie2 := s.authUser("user4", "password123")
+	cookie2 := fixtures.AuthUser(s.T(), s.server, "user4", "password123")
 	req2, _ := http.NewRequest(http.MethodPost, s.server.URL+"/api/user/orders", strings.NewReader(orderNumber))
 	req2.Header.Set("Content-Type", "text/plain")
 	req2.AddCookie(cookie2)
@@ -157,7 +121,7 @@ func (s *OrdersE2ETestSuite) TestAddOrder_ConflictOtherUser() {
 }
 
 func (s *OrdersE2ETestSuite) TestAddOrder_InvalidFormat() {
-	cookie := s.authUser("user5", "password123")
+	cookie := fixtures.AuthUser(s.T(), s.server, "user5", "password123")
 	invalidNumber := "123" // Не проходит валидациюпо Луну
 
 	req, _ := http.NewRequest(http.MethodPost, s.server.URL+"/api/user/orders", strings.NewReader(invalidNumber))
@@ -173,7 +137,7 @@ func (s *OrdersE2ETestSuite) TestAddOrder_InvalidFormat() {
 }
 
 func (s *OrdersE2ETestSuite) TestAddOrder_BadContentType() {
-	cookie := s.authUser("user6", "password123")
+	cookie := fixtures.AuthUser(s.T(), s.server, "user6", "password123")
 
 	req, _ := http.NewRequest(http.MethodPost, s.server.URL+"/api/user/orders", strings.NewReader("12345678903"))
 	req.Header.Set("Content-Type", "application/json") // Неправильный тип
@@ -188,7 +152,7 @@ func (s *OrdersE2ETestSuite) TestAddOrder_BadContentType() {
 }
 
 func (s *OrdersE2ETestSuite) TestListOrders_Success() {
-	cookie := s.authUser("user7", "password123")
+	cookie := fixtures.AuthUser(s.T(), s.server, "user7", "password123")
 	orderNumber := "1234567812345670" // Валидный номер
 
 	reqAdd, _ := http.NewRequest(http.MethodPost, s.server.URL+"/api/user/orders", strings.NewReader(orderNumber))
@@ -215,7 +179,7 @@ func (s *OrdersE2ETestSuite) TestListOrders_Success() {
 }
 
 func (s *OrdersE2ETestSuite) TestListOrders_Empty() {
-	cookie := s.authUser("user8", "password123")
+	cookie := fixtures.AuthUser(s.T(), s.server, "user8", "password123")
 
 	req, _ := http.NewRequest(http.MethodGet, s.server.URL+"/api/user/orders", nil)
 	req.AddCookie(cookie)

@@ -96,8 +96,8 @@ func TestBalanceService_Withdraw(t *testing.T) {
 
 		// Валидный номер по Луну (пример: 49927398716)
 		withdrawn := &models.Withdrawal{
-			ID:  "49927398716",
-			Sum: 100,
+			OrderID: "49927398716",
+			Sum:     100,
 		}
 
 		// Ожидаем, что UserID будет проставлен из контекста
@@ -106,7 +106,7 @@ func TestBalanceService_Withdraw(t *testing.T) {
 			if !ok {
 				return false
 			}
-			return w.UserID == userID && w.ID == "49927398716"
+			return w.UserID == userID && w.OrderID == "49927398716"
 		})).Return(nil)
 
 		err := service.Withdraw(ctx, withdrawn)
@@ -119,8 +119,8 @@ func TestBalanceService_Withdraw(t *testing.T) {
 		ctx = setClaimsToCtx(ctx, t, userID)
 
 		withdrawn := &models.Withdrawal{
-			ID:  "12345", // Невалидный номер
-			Sum: 100,
+			OrderID: "12345", // Невалидный номер
+			Sum:     100,
 		}
 
 		// БД не должна вызываться
@@ -134,8 +134,8 @@ func TestBalanceService_Withdraw(t *testing.T) {
 		ctx = setClaimsToCtx(ctx, t, userID)
 
 		withdrawn := &models.Withdrawal{
-			ID:  "49927398716", // Валидный
-			Sum: 100,
+			OrderID: "49927398716", // Валидный
+			Sum:     100,
 		}
 
 		mockDB.EXPECT().AddWithdrawn(gomock.Any(), gomock.Any()).Return(errors.New("insufficient funds"))

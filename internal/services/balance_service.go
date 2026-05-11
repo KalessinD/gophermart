@@ -65,7 +65,7 @@ func (s *BalanceService) GetBalanceInfo(ctx context.Context) (*models.Balance, e
 // Списывает с баланса пользователя.
 // Может вернуть ошибку
 func (s *BalanceService) Withdraw(ctx context.Context, withdrawn *models.Withdrawal) error {
-	if !alg.IsValidLuhn(withdrawn.ID) {
+	if !alg.IsValidLuhn(withdrawn.OrderID) {
 		return models.ErrOrderWrongFormat
 	}
 

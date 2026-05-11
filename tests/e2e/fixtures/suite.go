@@ -1,11 +1,18 @@
 package fixtures
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"testing"
 	"time"
 
+	"github.com/KalessinD/gophermart/internal/models"
 	"github.com/golang-migrate/migrate/v4"
 	mpg "github.com/golang-migrate/migrate/v4/database/postgres"
 	"github.com/stretchr/testify/require"
@@ -84,4 +91,31 @@ func (s *PostgresSuite) SetupTest(tables []string) {
 		_, err := s.DB.ExecContext(s.Ctx, fmt.Sprintf("TRUNCATE TABLE %s CASCADE", table))
 		require.NoError(s.T(), err, "Failed to truncate table "+table)
 	}
+}
+
+// регистрирует и авторизует пользователя
+func AuthUser(t *testing.T, server *httptest.Server, login, password string) *http.Cookie {
+	t.Helper()
+	user := models.User{Login: login, Password: password}
+	// nolint:gosec
+	body, err := json.Marshal(user)
+	require.NoError(t, err)
+
+	resp, err := http.Post(server.URL+"/api/user/register", "application/json", bytes.NewReader(body))
+	require.NoError(t, err)
+	defer resp.Body.Close()
+
+	_, err = io.Copy(io.Discard, resp.Body)
+	require.NoError(t, err)
+
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	for _, c := range resp.Cookies() {
+		if c.Name == "token" {
+			return c
+		}
+	}
+
+	require.Fail(t, "Auth cookie not found")
+	return nil
 }

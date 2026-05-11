@@ -3,9 +3,7 @@
 package gophermart_test
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -14,7 +12,6 @@ import (
 	"time"
 
 	"github.com/KalessinD/gophermart/internal/gophermart"
-	"github.com/KalessinD/gophermart/internal/models"
 	"github.com/KalessinD/gophermart/tests/e2e/fixtures"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -70,26 +67,6 @@ func TestOrderAccrualE2ETestSuite(t *testing.T) {
 	suite.Run(t, new(OrderAccrualE2ETestSuite))
 }
 
-// authUser регистрирует и логинит пользователя
-func (s *OrderAccrualE2ETestSuite) authUser(login, password string) *http.Cookie {
-	user := models.User{Login: login, Password: password}
-	body, _ := json.Marshal(user)
-
-	resp, err := http.Post(s.server.URL+"/api/user/register", "application/json", bytes.NewReader(body))
-	require.NoError(s.T(), err)
-	io.Copy(io.Discard, resp.Body)
-	resp.Body.Close()
-	require.Equal(s.T(), http.StatusOK, resp.StatusCode)
-
-	for _, c := range resp.Cookies() {
-		if c.Name == "token" {
-			return c
-		}
-	}
-	require.Fail(s.T(), "Auth cookie not found")
-	return nil
-}
-
 // TestOrderProcessing_Success проверяет полный цикл обработки заказа с начислением баллов
 func (s *OrderAccrualE2ETestSuite) TestOrderProcessing_Success() {
 	// Подготовка данных в Accrual ---
@@ -120,7 +97,7 @@ func (s *OrderAccrualE2ETestSuite) TestOrderProcessing_Success() {
 	// Действия пользователя в Gophermart ---
 
 	// Авторизация
-	cookie := s.authUser("user_accrual", "password123")
+	cookie := fixtures.AuthUser(s.T(), s.server, "user_accrual", "password123")
 
 	// Загрузка заказа в Gophermart
 	req, _ := http.NewRequest(http.MethodPost, s.server.URL+"/api/user/orders", strings.NewReader(orderNumber))
@@ -189,7 +166,7 @@ func (s *OrderAccrualE2ETestSuite) TestOrderProcessing_NoAccrual() {
 	require.NoError(s.T(), err, "Failed to register order in accrual")
 
 	// Авторизация
-	cookie := s.authUser("user_no_accrual", "password")
+	cookie := fixtures.AuthUser(s.T(), s.server, "user_no_accrual", "password")
 	client := &http.Client{}
 
 	// Загрузка заказа
