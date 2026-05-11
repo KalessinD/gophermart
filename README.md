@@ -50,7 +50,7 @@
 make build-docker start-docker
 ```
 
-Для запуска самого сервиса (требуется Go установленным локально):
+Для запуска самого сервиса (требуется Go установленный локально):
 ```bash
 make build-gophermart start-gophermart
 ```
