@@ -101,12 +101,17 @@ func (r *SQLStorage) UpdateOrder(ctx context.Context, order *models.Order) error
 		if err := r.updateOrderTx(ctx, tx, order); err != nil {
 			return err
 		}
+		if order.Status == models.OrderProcessedStatus && order.Accrual > 0 {
+			if err := r.updateUserBalanceTx(ctx, tx, order.UserID, order.Accrual.Int()); err != nil {
+				return err
+			}
+		}
 		return nil
 	})
 }
 
 func (r *SQLStorage) updateOrderTx(ctx context.Context, tx *sql.Tx, order *models.Order) error {
-	err := tx.QueryRowContext(ctx, QueryUpdateOrder, order.ID, order.UserID, order.Status, order.Accrual).Scan(&order.ID)
+	err := tx.QueryRowContext(ctx, QueryUpdateOrder, order.ID, order.UserID, order.Status, order.Accrual.Int()).Scan(&order.ID)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {

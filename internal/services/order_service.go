@@ -97,6 +97,7 @@ func (s *OrderService) List(ctx context.Context) (models.OrdersList, error) {
 }
 
 func (s *OrderService) ProcessAccrualTask(ctx context.Context, pauseCh chan time.Duration, task *processors.Task) error {
+	order := models.Order(*task)
 	resp, err := s.accrualClient.GetOrderAccrual(ctx, task.ID)
 	if err != nil {
 		if errors.Is(err, clients.ErrServiceIsBusy) {
@@ -109,26 +110,47 @@ func (s *OrderService) ProcessAccrualTask(ctx context.Context, pauseCh chan time
 				default:
 					// если заблокировали, значит отправил сигнал сосед, спокойно идем дальше по своим делам
 				}
+
+				// вернём задачу в очередь
+				s.sendOrderToProcessor(&order)
 			}
 		}
 		return err
 	}
 
-	order := models.Order(*task)
+	if resp.Status == models.OrderInProcessStatus && order.Status == resp.Status {
+		// заказ в обработке, при этом мы знаем этот статус - нечего писать в БД его ещё раз
+		s.sendOrderToProcessor(&order)
+		return nil
+	}
 
-	err = order.SetStatus(resp.Status)
+	targetStatus := resp.Status
+
+	if resp.Status == models.OrderRegisteredStatus {
+		// заказ зарегистрирован и ещё не начинал обрабатываться, у нас это models.OrderNewStatus
+		targetStatus = models.OrderNewStatus
+	}
+
+	err = order.SetStatus(targetStatus)
 	if err != nil {
 		return err
 	}
 
-	err = order.SetAccrual(resp.Accrual.String())
-	if err != nil {
-		return err
+	if len(resp.Accrual) > 0 {
+		err = order.SetAccrual(resp.Accrual.String())
+		if err != nil {
+			return err
+		}
 	}
 
 	err = s.db.UpdateOrder(ctx, &order)
 	if err != nil {
 		return err
+	}
+
+	if order.Status == models.OrderInProcessStatus {
+		// заказ не обработан ещё => вернём в очередь
+		s.sendOrderToProcessor(&order)
 	}
 
 	return nil

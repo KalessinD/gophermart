@@ -15,13 +15,13 @@ import (
 	"github.com/KalessinD/gophermart/internal/services/mocks"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
-	"go.uber.org/zap/zaptest"
+	"go.uber.org/zap"
 )
 
 func getTestContext(t *testing.T) context.Context {
 	t.Helper()
-	logger := zaptest.NewLogger(t)
-	return context.WithValue(context.Background(), middleware.LoggerKey, logger)
+	logger := zap.NewNop()
+	return context.WithValue(t.Context(), middleware.LoggerKey, logger)
 }
 
 func TestOrdersdHandler_AddOrder(t *testing.T) {

@@ -82,7 +82,7 @@ func GetEncodingField(prefix, name string, header http.Header) zap.Field {
   - responsecontent-encoding - HTTP заголовок Content-Encoding из ответа
   - response-accept-encoding - HTTP заголовок Accept-Encoding из ответа
 */
-func LoggerMiddleware(log *zap.Logger) func(http.Handler) http.Handler {
+func Logger(log *zap.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()

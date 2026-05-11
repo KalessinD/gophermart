@@ -89,7 +89,6 @@ func TestCommonHandler_Register(t *testing.T) {
 				cookies := rec.Result().Cookies()
 				found := false
 				for _, c := range cookies {
-					// Убрали строгую проверку на "valid-token", проверяем просто наличие значения
 					if c.Name == "token" && c.Value != "" {
 						found = true
 						break
@@ -107,40 +106,45 @@ func TestCommonHandler_Login(t *testing.T) {
 	logger := zap.NewNop()
 
 	tests := []struct {
-		name       string
-		body       string
-		prepare    func(m *mocks.MockUserCommonActions)
-		wantStatus int
+		name        string
+		body        string
+		contentType string
+		prepare     func(m *mocks.MockUserCommonActions)
+		wantStatus  int
 	}{
 		{
-			name: "Successful login",
-			body: `{"login": "testuser", "password": "password123"}`,
+			name:        "Successful login",
+			body:        `{"login": "testuser", "password": "password123"}`,
+			contentType: "application/json",
 			prepare: func(m *mocks.MockUserCommonActions) {
 				m.EXPECT().Login(gomock.Any(), gomock.Any()).Return(nil)
 			},
 			wantStatus: http.StatusOK,
 		},
 		{
-			name: "Wrong password",
-			body: `{"login": "testuser", "password": "wrongpass"}`,
+			name:        "Wrong password",
+			body:        `{"login": "testuser", "password": "wrongpass"}`,
+			contentType: "application/json",
 			prepare: func(m *mocks.MockUserCommonActions) {
 				m.EXPECT().Login(gomock.Any(), gomock.Any()).Return(models.ErrWrongPassword)
 			},
 			wantStatus: http.StatusUnauthorized,
 		},
 		{
-			name: "User not found",
-			body: `{"login": "nonexistent", "password": "password123"}`,
+			name:        "User not found",
+			body:        `{"login": "nonexistent", "password": "password123"}`,
+			contentType: "application/json",
 			prepare: func(m *mocks.MockUserCommonActions) {
 				m.EXPECT().Login(gomock.Any(), gomock.Any()).Return(models.ErrUserNotFound)
 			},
 			wantStatus: http.StatusUnauthorized,
 		},
 		{
-			name:       "Bad content type",
-			body:       `{"login": "test", "password": "test"}`,
-			prepare:    func(_ *mocks.MockUserCommonActions) {},
-			wantStatus: http.StatusBadRequest,
+			name:        "Bad content type",
+			body:        `{"login": "test", "password": "test"}`,
+			contentType: "text/plain", // Неверный тип
+			prepare:     func(_ *mocks.MockUserCommonActions) {},
+			wantStatus:  http.StatusBadRequest,
 		},
 	}
 
@@ -158,12 +162,7 @@ func TestCommonHandler_Login(t *testing.T) {
 			h := handlers.NewCommonHandler(mockService, authService)
 
 			req := httptest.NewRequest(http.MethodPost, "/api/user/login", bytes.NewBufferString(tt.body))
-
-			if tt.name != "Bad content type" {
-				req.Header.Set("Content-Type", "application/json")
-			} else {
-				req.Header.Set("Content-Type", "text/plain")
-			}
+			req.Header.Set("Content-Type", tt.contentType)
 
 			ctx := middleware.AddLoggerToContext(req.Context(), logger)
 			req = req.WithContext(ctx)
@@ -174,6 +173,21 @@ func TestCommonHandler_Login(t *testing.T) {
 
 			if rec.Code != tt.wantStatus {
 				t.Errorf("expected status %d, got %d", tt.wantStatus, rec.Code)
+			}
+
+			// Добавляем проверку куки для успешного логина
+			if tt.wantStatus == http.StatusOK {
+				cookies := rec.Result().Cookies()
+				found := false
+				for _, c := range cookies {
+					if c.Name == "token" && c.Value != "" {
+						found = true
+						break
+					}
+				}
+				if !found {
+					t.Error("expected auth cookie 'token' to be set on successful login")
+				}
 			}
 		})
 	}

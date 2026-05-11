@@ -1,17 +1,23 @@
 package handlers
 
 import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
 	"net/http"
 
 	// "github.com/KalessinD/gophermart/internal/models"
 	"github.com/KalessinD/gophermart/internal/common"
 	middleware "github.com/KalessinD/gophermart/internal/middleware"
+	"github.com/KalessinD/gophermart/internal/models"
 	service "github.com/KalessinD/gophermart/internal/services"
+	"go.uber.org/zap"
 )
 
 type (
 	BalanceHandler struct {
-		balanceService service.OrderServiceInterface
+		balanceService service.BalanceServiceInterface
 	}
 
 	BalanceHandlerInterface interface {
@@ -24,7 +30,7 @@ type (
 /*
 Конструктор для хендлеров работающих с балансами
 */
-func NewBalancesHandler(balanceService service.OrderServiceInterface) BalanceHandlerInterface {
+func NewBalancesHandler(balanceService service.BalanceServiceInterface) BalanceHandlerInterface {
 	return &BalanceHandler{
 		balanceService: balanceService,
 	}
@@ -61,12 +67,31 @@ Content-Length: 0
 */
 func (h *BalanceHandler) GetLoyalityBalance(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	log := middleware.GetLogger(ctx)
+	log := middleware.GetLogger(ctx).Sugar()
 
-	_ = log
+	balance, err := h.balanceService.GetBalanceInfo(ctx)
+	if err != nil {
+		status := h.defineResponseStatusByError(err)
+		if status == http.StatusInternalServerError {
+			log.Errorf("balance service failed to get balance: %s", err.Error())
+		} else {
+			log.Debugf("balance service failed to get balance: %s", err.Error())
+		}
+
+		w.WriteHeader(status)
+
+		return
+	}
+
+	body, err := balance.ToJSON()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 	w.Header().Set("Content-Type", common.AppJSONContentType)
 	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(body)
 }
 
 /*
@@ -95,9 +120,43 @@ Content-Type: application/json
 */
 func (h *BalanceHandler) WithdrawBalance(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	log := middleware.GetLogger(ctx)
+	log := middleware.GetLogger(ctx).Sugar()
+	contentType := r.Header.Get("Content-Type")
 
-	_ = log
+	if contentType != common.AppJSONContentType {
+		err := fmt.Errorf("bad request (wrong content-type): %s", contentType)
+		log.Error("error", zap.Error(err))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		err = fmt.Errorf("bad request: %w", err)
+		log.Error("error", zap.Error(err))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	withdrawn, err := models.FromJSON[models.Withdrawal](body)
+	if err != nil {
+		log.Error("error", zap.Error(err))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if err := h.balanceService.Withdraw(ctx, withdrawn); err != nil {
+		status := h.defineResponseStatusByError(err)
+		if status == http.StatusInternalServerError {
+			log.Errorf("balance service failed to withdraw: %s", err.Error())
+		} else {
+			log.Debugf("balance service failed to withdraw: %s", err.Error())
+		}
+
+		w.WriteHeader(status)
+
+		return
+	}
 
 	w.Header().Set("Content-Type", common.AppJSONContentType)
 	w.WriteHeader(http.StatusOK)
@@ -136,10 +195,45 @@ Content-Length: 0
 */
 func (h *BalanceHandler) ListWithdrawals(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	log := middleware.GetLogger(ctx)
+	log := middleware.GetLogger(ctx).Sugar()
 
-	_ = log
+	list, err := h.balanceService.ListWithdrawals(ctx)
+	if err != nil {
+		status := h.defineResponseStatusByError(err)
+		if status == http.StatusInternalServerError {
+			log.Errorf("balance service failed to list withdrawals: %s", err.Error())
+		} else {
+			log.Debugf("balance service failed to list withdrawals: %s", err.Error())
+		}
+		w.WriteHeader(status)
+		return
+	}
+
+	if len(list) == 0 {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	body, err := json.Marshal(list)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 	w.Header().Set("Content-Type", common.AppJSONContentType)
 	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(body)
+}
+
+func (h *BalanceHandler) defineResponseStatusByError(err error) (status int) {
+	switch {
+	case errors.Is(err, models.ErrOrderWrongFormat):
+		status = http.StatusUnprocessableEntity
+	case errors.Is(err, models.ErrUserBalanceIsNotEnough):
+		status = http.StatusPaymentRequired
+	default:
+		status = http.StatusInternalServerError
+	}
+
+	return
 }

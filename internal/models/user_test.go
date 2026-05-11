@@ -119,7 +119,7 @@ func TestUser_ToJSON(t *testing.T) {
 	}
 
 	// Проверяем, что результат является валидным JSON
-	var result map[string]interface{}
+	var result map[string]any
 	if err := json.Unmarshal(data, &result); err != nil {
 		t.Fatalf("Result is not valid JSON: %v", err)
 	}

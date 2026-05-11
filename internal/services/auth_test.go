@@ -33,7 +33,7 @@ func TestCommonAction_GenerateToken(t *testing.T) {
 
 		// Парсим токен для проверки содержимого
 		claims := &common.Claims{}
-		token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
+		token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (any, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, errors.New("unexpected signing method")
 			}
