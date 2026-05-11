@@ -41,7 +41,7 @@
 | `RUN_ADDRESS` | `-a` | Адрес и порт запуска сервиса | `:9081` |
 | `DATABASE_URI` | `-d` | Строка подключения к PostgreSQL | (пусто) |
 | `ACCRUAL_SYSTEM_ADDRESS` | `-r` | Адрес системы расчёта начислений | (пусто) |
-| `GOPHERMART_ENCRYPTION_KEY` | — | Ключ для шифрования JWT | (сгенерирован) |
+| `GOPHERMART_ENCRYPTION_KEY` |   | Ключ для шифрования JWT | (сгенерирован) |
 
 ### 2. Docker Compose
 Для запуска инфраструктуры (БД и Accrual) используйте:
@@ -126,7 +126,7 @@ YP_CUSTOM_TEST="TestGophermart/TestEndToEnd" make test-yp-custom
 * `make stop` — Останов приложения.
 * `make status` — Отображение статуса сборки контейнеров и сервера.
 
-# Yandex.Practicum
+# Ссылки Yandex.Practicum
 
 - [Репозиторий](https://github.com/yandex-praktikum/go-musthave-diploma-tpl) для индивидуального дипломного проекта курса «Go-разработчик» Яндекс Практикума.
 - [Репозиторий](https://github.com/yandex-praktikum/go-musthave-group-diploma-tpl) для группового дипломного проекта курса «Go-разработчик» Яндекс Практикума.
