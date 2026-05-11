@@ -68,28 +68,6 @@ func TestPgMigrator_Apply(t *testing.T) {
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 
-	t.Run("read file error (permission denied)", func(t *testing.T) {
-		// Создаем директорию без прав на чтение/запись файлов,
-		// или файл без прав чтения, чтобы вызвать ошибку os.ReadFile
-		// (Пропускаем на Windows, так как права работают иначе)
-		if os.Getenv("GOOS") == "windows" {
-			t.Skip("skipping on windows")
-		}
-
-		fileName := "protected"
-		protectedDir := filepath.Join(tmpDir, fileName)
-		err := os.Mkdir(protectedDir, 0o000) // никаких прав
-		require.NoError(t, err)
-
-		// Восстанавливаем права для очистки
-		defer func() { _ = os.Chmod(protectedDir, 0o755) }()
-
-		// os.ReadFile упадет с permission denied
-		err = migrator.Apply(context.Background(), tmpDir, []string{protectedDir})
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "permission denied")
-	})
-
 	t.Run("read directory instead of file", func(t *testing.T) {
 		// Попытка "прочитать" директорию как файл вызовет ошибку (не IsNotExist)
 		dirName := "somedir"

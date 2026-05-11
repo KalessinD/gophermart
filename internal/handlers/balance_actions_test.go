@@ -64,14 +64,14 @@ func TestBalanceHandler_WithdrawBalance(t *testing.T) {
 	handler := handlers.NewBalancesHandler(mockService)
 
 	validOrderID := "12345678903" // Валидный по Луну номер для контекста (если сервис проверяет)
-	input := models.Withdrawn{OrderID: validOrderID, Sum: 100}
+	input := models.Withdrawal{OrderID: validOrderID, Sum: 100}
 	inputBody, _ := json.Marshal(input)
 
 	t.Run("success", func(t *testing.T) {
 		ctx := getTestContext(t)
 		// Ожидаем, что сервис получит структуру с суммой
 		mockService.EXPECT().Withdraw(ctx, gomock.Cond(func(x any) bool {
-			w, ok := x.(*models.Withdrawn)
+			w, ok := x.(*models.Withdrawal)
 			return ok && w.OrderID == validOrderID && w.Sum == 100
 		})).Return(nil)
 
@@ -148,7 +148,7 @@ func TestBalanceHandler_ListWithdrawals(t *testing.T) {
 
 	t.Run("success with data", func(t *testing.T) {
 		ctx := getTestContext(t)
-		list := models.WithdrawnList{
+		list := models.WithdrawalsList{
 			{OrderID: "1", Sum: 100},
 		}
 		mockService.EXPECT().ListWithdrawals(ctx).Return(list, nil)
@@ -167,7 +167,7 @@ func TestBalanceHandler_ListWithdrawals(t *testing.T) {
 	t.Run("success empty list", func(t *testing.T) {
 		ctx := getTestContext(t)
 
-		mockService.EXPECT().ListWithdrawals(ctx).Return(models.WithdrawnList{}, nil)
+		mockService.EXPECT().ListWithdrawals(ctx).Return(models.WithdrawalsList{}, nil)
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "/api/user/withdrawals", nil)
 		require.NoError(t, err)

@@ -58,7 +58,7 @@ func TestJSONStorage_SaveAndRestore(t *testing.T) {
 	require.Equal(t, originalOrders[0].ID, restored[0].ID)
 	require.Equal(t, originalOrders[0].Status, restored[0].Status)
 	require.Equal(t, originalOrders[0].Accrual, restored[0].Accrual)
-	require.Equal(t, originalOrders[0].UploadedAt, restored[0].UploadedAt)
+	require.True(t, originalOrders[0].UploadedAt.Equal(restored[0].UploadedAt), "UploadedAt should be equal")
 
 	// UserID имеет тег `json:"-"`, поэтому при восстановлении он будет пустым
 	// нам это неважно, т.к. accrual принимает только номер заказа, а в БД запись мы обновляем по orderID

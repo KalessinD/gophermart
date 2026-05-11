@@ -21,6 +21,7 @@ const (
 	DefaultWorkerPoolChanBuffer     int           = 32
 	DefaultAccrualClientTImeout     time.Duration = 3 * time.Second
 	DefaultDumperStoragePath        string        = "/tmp/practicum-gophermart-storage.dumps"
+	DefaultCompressionThreshold     int           = 1024
 
 	// got by using `openssl rand -hex 32`
 	DefaultServerEncryptionKey string = "c7f7b4036a3fb58734412433cb7a2ed8dec913c650ef8475f05f5b36422cc18d"
@@ -43,6 +44,7 @@ type (
 		AccrualClientTImeout     time.Duration
 		WorkerPoolChanBuffer     int
 		DumperStoragePath        string
+		CompressionThreshold     int
 	}
 
 	GophermartConfigInterface interface {
@@ -69,6 +71,7 @@ func GetDefaultGophermartConfig() *GophermartConfig {
 		AccrualClientTImeout:     DefaultAccrualClientTImeout,
 		WorkerPoolChanBuffer:     DefaultWorkerPoolChanBuffer,
 		DumperStoragePath:        DefaultDumperStoragePath,
+		CompressionThreshold:     DefaultCompressionThreshold,
 	}
 }
 

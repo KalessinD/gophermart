@@ -138,7 +138,7 @@ func (h *BalanceHandler) WithdrawBalance(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	withdrawn, err := models.FromJSON[models.Withdrawn](body)
+	withdrawn, err := models.FromJSON[models.Withdrawal](body)
 	if err != nil {
 		log.Error("error", zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)

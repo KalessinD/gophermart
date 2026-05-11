@@ -70,7 +70,7 @@ func (mr *MockSQLStorageInterfaceMockRecorder) AddUser(ctx, user any) *gomock.Ca
 }
 
 // AddWithdrawn mocks base method.
-func (m *MockSQLStorageInterface) AddWithdrawn(ctx context.Context, withdrawn *models.Withdrawn) error {
+func (m *MockSQLStorageInterface) AddWithdrawn(ctx context.Context, withdrawn *models.Withdrawal) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddWithdrawn", ctx, withdrawn)
 	ret0, _ := ret[0].(error)
@@ -129,10 +129,10 @@ func (mr *MockSQLStorageInterfaceMockRecorder) GetUserByID(ctx, userID any) *gom
 }
 
 // GetWithdrawn mocks base method.
-func (m *MockSQLStorageInterface) GetWithdrawn(ctx context.Context, userID string) (*models.Withdrawn, error) {
+func (m *MockSQLStorageInterface) GetWithdrawn(ctx context.Context, userID string) (*models.Withdrawal, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetWithdrawn", ctx, userID)
-	ret0, _ := ret[0].(*models.Withdrawn)
+	ret0, _ := ret[0].(*models.Withdrawal)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -159,10 +159,10 @@ func (mr *MockSQLStorageInterfaceMockRecorder) ListOrders(ctx, userID any) *gomo
 }
 
 // ListWithdrawals mocks base method.
-func (m *MockSQLStorageInterface) ListWithdrawals(ctx context.Context, userID string) (models.WithdrawnList, error) {
+func (m *MockSQLStorageInterface) ListWithdrawals(ctx context.Context, userID string) (models.WithdrawalsList, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListWithdrawals", ctx, userID)
-	ret0, _ := ret[0].(models.WithdrawnList)
+	ret0, _ := ret[0].(models.WithdrawalsList)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

@@ -32,6 +32,9 @@ func (r *SQLStorage) GetUser(ctx context.Context, login string) (*models.User, e
 		return row, nil
 	})
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, models.ErrUserNotFound
+		}
 		return nil, err
 	}
 	return user, nil
@@ -80,9 +83,12 @@ func (r *SQLStorage) updateUserBalanceTx(ctx context.Context, tx *sql.Tx, userID
 	var updatedUserID string
 	err := tx.QueryRowContext(ctx, QueryUpdateUserBalance, userID, diffSum).Scan(&updatedUserID)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return models.ErrUserBalanceIsNotEnough
+		}
 		return err
 	}
-	if updatedUserID == "" {
+	if updatedUserID == "" { // на всякий случай
 		return models.ErrUserBalanceIsNotEnough
 	}
 	return nil

@@ -144,7 +144,7 @@ func TestSQLStorage_AddWithdrawn(t *testing.T) {
 	storage := postgresql.NewSQLStorage(db)
 
 	t.Run("successful add withdrawn", func(t *testing.T) {
-		wd := &models.Withdrawn{
+		wd := &models.Withdrawal{
 			UserID:  UserID,
 			OrderID: "order_1",
 			Sum:     500,
@@ -170,7 +170,7 @@ func TestSQLStorage_AddWithdrawn(t *testing.T) {
 	})
 
 	t.Run("error during insert", func(t *testing.T) {
-		wd := &models.Withdrawn{
+		wd := &models.Withdrawal{
 			UserID:  UserID,
 			OrderID: "order_err",
 			Sum:     100,
@@ -189,7 +189,7 @@ func TestSQLStorage_AddWithdrawn(t *testing.T) {
 	})
 
 	t.Run("error during balance update", func(t *testing.T) {
-		wd := &models.Withdrawn{
+		wd := &models.Withdrawal{
 			UserID:  UserID,
 			OrderID: "order_balance_err",
 			Sum:     100,
@@ -213,7 +213,7 @@ func TestSQLStorage_AddWithdrawn(t *testing.T) {
 	})
 
 	t.Run("retry logic on transaction", func(t *testing.T) {
-		wd := &models.Withdrawn{
+		wd := &models.Withdrawal{
 			UserID:  "user_retry",
 			OrderID: "order_retry",
 			Sum:     100,

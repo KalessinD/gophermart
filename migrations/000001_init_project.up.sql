@@ -51,7 +51,7 @@ COMMENT ON COLUMN gophermart.orders.updated_at IS 'Дата обновления
 
 CREATE INDEX IF NOT EXISTS status_idx ON gophermart.orders USING btree(status);
 
-CREATE TABLE IF NOT EXISTS gophermart.withdrawns (
+CREATE TABLE IF NOT EXISTS gophermart.withdrawals (
     id VARCHAR(256) NOT NULL DEFAULT uuidv7(),
     user_id UUID NOT NULL,
     order_id VARCHAR(256) NOT NULL,
@@ -59,16 +59,16 @@ CREATE TABLE IF NOT EXISTS gophermart.withdrawns (
     processed_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-ALTER TABLE gophermart.withdrawns ADD PRIMARY KEY(id);
+ALTER TABLE gophermart.withdrawals ADD PRIMARY KEY(id);
 
-COMMENT ON TABLE gophermart.withdrawns IS 'Таблица списания бонусных баллов';
+COMMENT ON TABLE gophermart.withdrawals IS 'Таблица списания бонусных баллов';
 
-COMMENT ON COLUMN gophermart.withdrawns.id IS 'Уникальный идентификатор операции';
-COMMENT ON COLUMN gophermart.withdrawns.user_id IS 'ID пользователя';
-COMMENT ON COLUMN gophermart.withdrawns.order_id IS 'Номер заказа';
-COMMENT ON COLUMN gophermart.withdrawns.withdrawn IS 'Сумма списаний';
-COMMENT ON COLUMN gophermart.withdrawns.processed_at IS 'Дата списания';
+COMMENT ON COLUMN gophermart.withdrawals.id IS 'Уникальный идентификатор операции';
+COMMENT ON COLUMN gophermart.withdrawals.user_id IS 'ID пользователя';
+COMMENT ON COLUMN gophermart.withdrawals.order_id IS 'Номер заказа';
+COMMENT ON COLUMN gophermart.withdrawals.withdrawn IS 'Сумма списаний';
+COMMENT ON COLUMN gophermart.withdrawals.processed_at IS 'Дата списания';
 
-CREATE INDEX IF NOT EXISTS user_idx ON gophermart.withdrawns USING btree(user_id, order_id);
+CREATE INDEX IF NOT EXISTS user_idx ON gophermart.withdrawals USING btree(user_id, order_id);
 
 COMMIT;

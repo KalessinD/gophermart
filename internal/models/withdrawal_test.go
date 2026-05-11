@@ -15,14 +15,14 @@ func TestWithdrawn_ToJSON(t *testing.T) {
 
 	tests := []struct {
 		name         string
-		withdrawn    models.Withdrawn
+		withdrawn    models.Withdrawal
 		wantJSON     string
 		wantContains []string
 		dontContains []string
 	}{
 		{
 			name: "valid withdrawal with sum",
-			withdrawn: models.Withdrawn{
+			withdrawn: models.Withdrawal{
 				ID:          "internal_id_123", // Должен быть скрыт
 				UserID:      "user_1",          // Должен быть скрыт
 				OrderID:     "order_abc",
@@ -33,7 +33,7 @@ func TestWithdrawn_ToJSON(t *testing.T) {
 		},
 		{
 			name: "small sum",
-			withdrawn: models.Withdrawn{
+			withdrawn: models.Withdrawal{
 				OrderID:     "order_small",
 				Sum:         5, // 0.05
 				ProcessedAt: now,
@@ -42,7 +42,7 @@ func TestWithdrawn_ToJSON(t *testing.T) {
 		},
 		{
 			name: "zero sum",
-			withdrawn: models.Withdrawn{
+			withdrawn: models.Withdrawal{
 				OrderID:     "order_zero",
 				Sum:         0,
 				ProcessedAt: now,
@@ -84,7 +84,7 @@ func TestWithdrawn_ToJSON(t *testing.T) {
 func TestWithdrawnList_MarshalJSON(t *testing.T) {
 	now := time.Date(2023, 10, 5, 15, 30, 0, 0, time.UTC)
 
-	list := models.WithdrawnList{
+	list := models.WithdrawalsList{
 		{
 			OrderID:     "order1",
 			Sum:         100, // 1.00

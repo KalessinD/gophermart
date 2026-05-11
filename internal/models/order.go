@@ -10,10 +10,11 @@ import (
 )
 
 const (
-	OrderNewStatus       = "NEW"
-	OrderInProcessStatus = "PROCESSING"
-	OrderInvalidStatus   = "INVALID"
-	OrderProcessedStatus = "PROCESSED"
+	OrderNewStatus        = "NEW"
+	OrderRegisteredStatus = "REGISTERED"
+	OrderInProcessStatus  = "PROCESSING"
+	OrderInvalidStatus    = "INVALID"
+	OrderProcessedStatus  = "PROCESSED"
 )
 
 var (
