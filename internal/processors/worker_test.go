@@ -9,11 +9,11 @@ import (
 
 	"github.com/KalessinD/gophermart/internal/processors"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap/zaptest"
+	"go.uber.org/zap"
 )
 
 func TestNewWorker(t *testing.T) {
-	logger := zaptest.NewLogger(t)
+	logger := zap.NewNop()
 	ch := make(chan *processors.Task)
 	pauseCh := make(chan time.Duration, 1)
 	defer close(pauseCh)
@@ -30,7 +30,7 @@ func TestNewWorker(t *testing.T) {
 }
 
 func TestWorker_Run(t *testing.T) {
-	logger := zaptest.NewLogger(t)
+	logger := zap.NewNop()
 
 	t.Run("stops on context cancel", func(t *testing.T) {
 		ch := make(chan *processors.Task)

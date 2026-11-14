@@ -26,7 +26,7 @@ func TestMiddleware_LogsRequest(t *testing.T) {
 	})
 
 	// оборачиваем middleware
-	middleware := mw.LoggerMiddleware(logger)
+	middleware := mw.Logger(logger)
 	handler := middleware(next)
 
 	// создаём тестовый запрос
@@ -167,7 +167,7 @@ func TestMiddleware(t *testing.T) {
 	rec := httptest.NewRecorder()
 
 	// Запускаем мидлварю
-	mw := mw.LoggerMiddleware(testLogger)
+	mw := mw.Logger(testLogger)
 	mw(handler).ServeHTTP(rec, req)
 
 	// Проверяем, что ответ прошел корректно
@@ -199,7 +199,7 @@ func TestMiddleware(t *testing.T) {
 	// Проверяем наличие и значение ключевых полей
 	tests := []struct {
 		key      string
-		expected interface{}
+		expected any
 	}{
 		{"request_id", reqID},
 		{"method", http.MethodPost},

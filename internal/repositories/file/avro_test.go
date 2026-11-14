@@ -57,8 +57,8 @@ func TestAvroFileStorage_SaveAndRestore(t *testing.T) {
 	require.Equal(t, originalOrders[0].ID, restored[0].ID)
 	require.Equal(t, originalOrders[0].Status, restored[0].Status)
 	require.Equal(t, originalOrders[0].Accrual, restored[0].Accrual)
-	require.Equal(t, originalOrders[0].UploadedAt, restored[0].UploadedAt)
-	require.Equal(t, originalOrders[0].UpdatedAt, restored[0].UpdatedAt)
+	require.True(t, originalOrders[0].UploadedAt.Equal(restored[0].UploadedAt), "UploadedAt should be equal")
+	require.True(t, originalOrders[0].UpdatedAt.Equal(restored[0].UpdatedAt), "UpdatedAt should be equal")
 
 	// В Avro схеме поле user_id присутствует, поэтому оно должно восстановиться
 	require.Equal(t, originalOrders[0].UserID, restored[0].UserID, "UserID should be restored from Avro file")

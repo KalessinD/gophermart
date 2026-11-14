@@ -31,11 +31,16 @@ type (
 	SQLStorageInterface interface {
 		AddUser(ctx context.Context, user *models.User) error
 		GetUser(ctx context.Context, login string) (*models.User, error)
+		GetUserByID(ctx context.Context, userID string) (*models.User, error)
 
 		AddOrder(ctx context.Context, order *models.Order) error
 		GetOrder(ctx context.Context, orderID, userID string) (*models.Order, error)
 		ListOrders(ctx context.Context, userID string) (models.OrdersList, error)
 		UpdateOrder(ctx context.Context, order *models.Order) error
+
+		AddWithdrawn(ctx context.Context, withdrawn *models.Withdrawal) error
+		GetWithdrawn(ctx context.Context, userID string) (*models.Withdrawal, error)
+		ListWithdrawals(ctx context.Context, userID string) (models.WithdrawalsList, error)
 
 		Ping(ctx context.Context) error
 	}

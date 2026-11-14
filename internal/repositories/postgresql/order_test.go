@@ -28,7 +28,6 @@ func TestSQLStorage_GetOrder(t *testing.T) {
 		userID := "user_1"
 		now := time.Now().Truncate(time.Microsecond)
 
-		// QuerySelectOrder выбирает: id, user_id, status, accrual, uploaded_at, updated_at
 		rows := sqlmock.NewRows([]string{"id", "user_id", "status", "accrual", "uploaded_at", "updated_at"}).
 			AddRow(orderID, userID, models.OrderNewStatus, 100, now, now)
 
@@ -197,7 +196,7 @@ func TestSQLStorage_AddOrder(t *testing.T) {
 		order := &models.Order{ID: "retry", UserID: "user_1", Status: models.OrderNewStatus}
 		pgErr := &pgconn.PgError{Code: pgerrcode.ConnectionFailure}
 
-		// Первая попытка - ошибка соединения (ретрается в withTxRetry)
+		// Первая попытка - ошибка соединения
 		mock.ExpectBegin()
 		mock.ExpectQuery("INSERT").
 			WithArgs(order.ID, order.UserID, order.Status).
@@ -218,13 +217,12 @@ func TestSQLStorage_AddOrder(t *testing.T) {
 }
 
 func TestSQLStorage_UpdateOrder(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	require.NoError(t, err)
-	defer db.Close()
-
-	storage := postgresql.NewSQLStorage(db)
-
 	t.Run("successful update order", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+		require.NoError(t, err)
+		defer db.Close()
+		storage := postgresql.NewSQLStorage(db)
+
 		order := &models.Order{
 			ID:      "123",
 			UserID:  "user_1",
@@ -233,18 +231,30 @@ func TestSQLStorage_UpdateOrder(t *testing.T) {
 		}
 
 		mock.ExpectBegin()
-		// QueryUpdateOrder использует INSERT ... ON CONFLICT DO UPDATE
+
+		// Ожидаем запрос обновления заказа
 		mock.ExpectQuery("INSERT").
 			WithArgs(order.ID, order.UserID, order.Status, order.Accrual).
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(order.ID))
+
+		// Ожидаем запрос обновления баланса (так как он вызывается всегда в вашем коде)
+		mock.ExpectQuery("UPDATE").
+			WithArgs(order.UserID, order.Accrual.Int()).
+			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(order.UserID))
+
 		mock.ExpectCommit()
 
-		err := storage.UpdateOrder(context.Background(), order)
+		err = storage.UpdateOrder(context.Background(), order)
 		require.NoError(t, err)
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 
-	t.Run("database error during update", func(t *testing.T) {
+	t.Run("database error during update order", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+		require.NoError(t, err)
+		defer db.Close()
+		storage := postgresql.NewSQLStorage(db)
+
 		order := &models.Order{ID: "123", UserID: "user_1", Status: models.OrderInvalidStatus}
 
 		mock.ExpectBegin()
@@ -253,13 +263,18 @@ func TestSQLStorage_UpdateOrder(t *testing.T) {
 			WillReturnError(errors.New("update failed"))
 		mock.ExpectRollback()
 
-		err := storage.UpdateOrder(context.Background(), order)
+		err = storage.UpdateOrder(context.Background(), order)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "update failed")
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 
-	t.Run("unique violation error (rare for update, but possible in logic)", func(t *testing.T) {
+	t.Run("unique violation error", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+		require.NoError(t, err)
+		defer db.Close()
+		storage := postgresql.NewSQLStorage(db)
+
 		order := &models.Order{ID: "123", UserID: "user_1", Status: models.OrderNewStatus}
 		pgErr := &pgconn.PgError{Code: pgerrcode.UniqueViolation}
 
@@ -269,14 +284,18 @@ func TestSQLStorage_UpdateOrder(t *testing.T) {
 			WillReturnError(pgErr)
 		mock.ExpectRollback()
 
-		err := storage.UpdateOrder(context.Background(), order)
+		err = storage.UpdateOrder(context.Background(), order)
 		require.Error(t, err)
-		// Проверяем, что ошибка мапится в ErrOrderExists согласно логике updateOrderTx
 		assert.ErrorIs(t, err, models.ErrOrderExists)
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 
 	t.Run("retry logic on update", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+		require.NoError(t, err)
+		defer db.Close()
+		storage := postgresql.NewSQLStorage(db)
+
 		order := &models.Order{
 			ID:      "retry",
 			UserID:  "user_1",
@@ -285,21 +304,27 @@ func TestSQLStorage_UpdateOrder(t *testing.T) {
 		}
 		pgErr := &pgconn.PgError{Code: pgerrcode.ConnectionFailure}
 
-		// Первая попытка - ошибка соединения
+		// Первая попытка - ошибка соединения (на этапе обновления заказа)
 		mock.ExpectBegin()
 		mock.ExpectQuery("INSERT").
 			WithArgs(order.ID, order.UserID, order.Status, order.Accrual).
 			WillReturnError(pgErr)
 		mock.ExpectRollback()
 
-		// Вторая попытка - успех
+		// Вторая попытка - успех (обновляем заказ И баланс)
 		mock.ExpectBegin()
 		mock.ExpectQuery("INSERT").
 			WithArgs(order.ID, order.UserID, order.Status, order.Accrual).
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(order.ID))
+
+		// Добавляем ожидание обновления баланса для второй успешной попытки
+		mock.ExpectQuery("UPDATE").
+			WithArgs(order.UserID, order.Accrual.Int()).
+			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(order.UserID))
+
 		mock.ExpectCommit()
 
-		err := storage.UpdateOrder(context.Background(), order)
+		err = storage.UpdateOrder(context.Background(), order)
 		require.NoError(t, err)
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})

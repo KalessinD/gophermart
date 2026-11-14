@@ -17,10 +17,8 @@ services:
   accrual:
     container_name: go-accrual
     build:
-      context: ./docker/accrual
-      additional_contexts:
-        bin: ./cmd/accrual
-      dockerfile: Dockerfile
+      context: ./
+      dockerfile: ./docker/accrual/Dockerfile
     depends_on:
       - db
     ports:

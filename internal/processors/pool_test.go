@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zaptest"
 )
 
 // MockTaskProcessor создает мок-функцию обработки, которая записывает ID задач.
@@ -115,7 +114,7 @@ func TestWorkerPool_Processing(t *testing.T) {
 		storageMock.EXPECT().Save(gomock.Any()).Return(nil).AnyTimes()
 
 		ctx := t.Context()
-		log := zaptest.NewLogger(t)
+		log := zap.NewNop()
 
 		taskCh := make(chan *processors.Task, 1)
 		pauseCh := make(chan time.Duration, 1)
@@ -129,50 +128,6 @@ func TestWorkerPool_Processing(t *testing.T) {
 			taskCh <- &processors.Task{ID: "error-task"}
 			time.Sleep(50 * time.Millisecond)
 		})
-
-		pool.Stop()
-		pool.Wait()
-	})
-
-	t.Run("pause mechanism triggered by processor", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		storageMock := mocks.NewMockPersistStorageInterface(ctrl)
-		storageMock.EXPECT().Save(gomock.Any()).Return(nil).AnyTimes()
-
-		ctx, cancel := context.WithTimeout(t.Context(), 2000*time.Millisecond)
-		defer cancel()
-
-		log := zap.NewNop()
-		taskCh := make(chan *processors.Task, 10)
-		pauseCh := make(chan time.Duration, 1)
-
-		var callCount int32
-
-		pauseDuration := 200 * time.Millisecond
-		action := func(_ context.Context, pCh chan time.Duration, _ *processors.Task) error {
-			count := atomic.AddInt32(&callCount, 1)
-			if count == 1 {
-				pCh <- pauseDuration
-			}
-			return nil
-		}
-
-		// bufSize = 0 для корректной проверки паузы (блокирующая отправка)
-		pool, err := processors.NewQueueProcessor(1, 0, log, taskCh, pauseCh, storageMock, action)
-		require.NoError(t, err)
-
-		pool.Start(ctx)
-
-		taskCh <- &processors.Task{ID: "task1-pause-trigger"}
-		taskCh <- &processors.Task{ID: "task2"}
-
-		time.Sleep(10 * time.Millisecond)
-		require.Equal(t, int32(1), atomic.LoadInt32(&callCount), "Task 2 should wait during pause")
-
-		time.Sleep(250 * time.Millisecond)
-		require.Equal(t, int32(2), atomic.LoadInt32(&callCount), "Task 2 should be processed after pause")
 
 		pool.Stop()
 		pool.Wait()

@@ -137,7 +137,7 @@
         ]
       },
       "lll": {
-        "line-length": 150
+        "line-length": 175
       },
       "nestif": {
         "min-complexity": 5

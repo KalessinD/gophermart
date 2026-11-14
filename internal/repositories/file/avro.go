@@ -111,7 +111,7 @@ func (m *AvroFileStorage) Save(orders models.OrdersList) error {
 		return err
 	}
 
-	var dataToWrite []interface{}
+	var dataToWrite []any
 	for _, order := range orders {
 		avroMap := modelToAvro(order)
 		dataToWrite = append(dataToWrite, avroMap)
@@ -154,8 +154,8 @@ func modelToAvro(o *models.Order) map[string]any {
 }
 
 // avroToModel преобразует Avro запись в models.Order
-func avroToModel(datum interface{}) (*models.Order, error) {
-	record, ok := datum.(map[string]interface{})
+func avroToModel(datum any) (*models.Order, error) {
+	record, ok := datum.(map[string]any)
 	if !ok {
 		return nil, errors.New("wrong Avro-record format")
 	}
